@@ -162,3 +162,17 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* MapLibre: keep the attribution (MapTiler / OpenStreetMap) clear of the floating mobile UI. */
+@media (max-width: 1023.98px) {
+  .kape-map .maplibregl-ctrl-top-left {
+    top: calc(max(0.75rem, env(safe-area-inset-top)) + 104px);
+  }
+}
+.kape-map .maplibregl-ctrl-attrib {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 11px;
+}
+.kape-map .maplibregl-marker:has(button:focus-visible) {
+  z-index: 10;
+}

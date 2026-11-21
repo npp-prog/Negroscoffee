@@ -121,6 +121,19 @@ export async function getShopsNear(
   return cards(rows);
 }
 
+/** One published shop in card shape (deep-linked selection); null when missing or hidden. */
+export async function getShopCardBySlug(db: Db, slug: string): Promise<ShopCard | null> {
+  const row = unwrap(
+    await db
+      .from("shop_cards")
+      .select("*")
+      .eq("slug", slug)
+      .eq("status", "published")
+      .maybeSingle(),
+  );
+  return row ? toCard(row) : null;
+}
+
 export type ShopDetail = ShopCard & {
   description: string | null;
   phone: string | null;

@@ -25,7 +25,13 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 - Supabase clients live in `lib/supabase/` (browser, server, service-role admin). The
   service-role client is server-only; never import it from client components.
 - Schema changes = new SQL file in `supabase/migrations/` (timestamped). Never edit an applied migration.
-- Filters and selected shop are stored in the URL query string (`lib/filters.ts`).
+- Filters and selected shop are stored in the URL query string (`lib/filters.ts`): `q`, `type`,
+  `tier`, `open`, `city`, `shop`. Read with `useExploreState()`; it writes via the History API
+  (filters replace, selecting a shop pushes).
+- Map: `components/map/map-view.tsx` (client-only, `next/dynamic` with `ssr: false`). Pins are
+  HTML markers clustered with `supercluster`. MapLibre's worker URL is set explicitly
+  (`setWorkerUrl`) because bundling breaks its default lookup. Keep the attribution control visible.
+- Open-now logic lives in `lib/hours.ts` (Asia/Manila); the "Open now" filter runs client-side.
 - Time logic uses `Asia/Manila`.
 - Never hardcode keys; use `.env.local`, document in `.env.example`.
 - Google Places: store `google_place_id` only, no other Google data.
@@ -67,7 +73,8 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   `supabase/tests/*.test.sql` (needs `PGHOST`/`PGPORT`/`PGUSER`). The shim fakes Supabase's
   `auth`/`storage`/roles; it is test-only.
 - `npm run db:types:local` — regenerate types from `$TEST_DATABASE_URL` (e.g. the test DB)
-- Later milestones: `npm test` (Vitest), `npm run e2e` (Playwright), `npm run import:osm`
+- `npm test` — Vitest unit tests in `tests/` (filters, open-now)
+- Later milestones: `npm run e2e` (Playwright), `npm run import:osm`
 
 ## Database notes
 

@@ -10,19 +10,10 @@ import {
   type PriceTier,
   type ShopType,
 } from "@/lib/categories";
+import { toggleValue } from "@/lib/filters";
 import { cn } from "@/lib/utils";
 
-export type ExploreFilters = {
-  tiers: PriceTier[];
-  types: ShopType[];
-  openNow: boolean;
-};
-
-export const EMPTY_FILTERS: ExploreFilters = { tiers: [], types: [], openNow: false };
-
-function toggle<T>(list: T[], item: T): T[] {
-  return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
-}
+type ChipFilters = { tiers: PriceTier[]; types: ShopType[]; openNow: boolean };
 
 export function FilterChips({
   filters,
@@ -30,8 +21,8 @@ export function FilterChips({
   className,
   wrap = false,
 }: {
-  filters: ExploreFilters;
-  onChange: (next: ExploreFilters) => void;
+  filters: ChipFilters;
+  onChange: (patch: Partial<ChipFilters>) => void;
   className?: string;
   /** Wrap onto multiple lines (desktop panel) instead of horizontal scroll (mobile). */
   wrap?: boolean;
@@ -48,10 +39,7 @@ export function FilterChips({
         className,
       )}
     >
-      <Chip
-        pressed={filters.openNow}
-        onClick={() => onChange({ ...filters, openNow: !filters.openNow })}
-      >
+      <Chip pressed={filters.openNow} onClick={() => onChange({ openNow: !filters.openNow })}>
         <Clock className="size-3.5" aria-hidden="true" />
         Open now
       </Chip>
@@ -59,7 +47,7 @@ export function FilterChips({
         <Chip
           key={type}
           pressed={filters.types.includes(type)}
-          onClick={() => onChange({ ...filters, types: toggle(filters.types, type) })}
+          onClick={() => onChange({ types: toggleValue(filters.types, type) })}
         >
           <span
             className="size-2.5 rounded-full"
@@ -73,7 +61,7 @@ export function FilterChips({
         <Chip
           key={tier}
           pressed={filters.tiers.includes(tier)}
-          onClick={() => onChange({ ...filters, tiers: toggle(filters.tiers, tier) })}
+          onClick={() => onChange({ tiers: toggleValue(filters.tiers, tier) })}
           aria-label={`${PRICE_TIER_META[tier].label}: ${PRICE_TIER_META[tier].range}`}
         >
           <span className="font-semibold tracking-tight tabular">
