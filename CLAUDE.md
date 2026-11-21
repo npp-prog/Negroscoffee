@@ -42,6 +42,12 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 - Google Places: store `google_place_id` only, no other Google data.
 - Show OpenStreetMap attribution wherever OSM-imported data appears on the map. Shop pages with an
   `osm_id` show "Some details from © OpenStreetMap contributors".
+- Public forms: `/suggest` (new shop; `?shop=<slug>` = correction) and `/claim/[slug]`. Zod schemas
+  in `lib/validation.ts`; Server Actions validate, then insert via `lib/db/submissions.ts` using the
+  visitor's own Supabase client (RLS applies, no read-back since anon can't SELECT submissions).
+  Photos are resized in the browser and stored privately in `submission-proofs` (`claims/`,
+  `suggestions/`); server caps 3 MB, `serverActions.bodySizeLimit` is 4 MB. Spam guard = honeypot
+  `website_hp` + minimum fill time (`startedAt`, set after mount). Admins review in milestone 7.
 - `supabase/seed.sql` includes 10 fictional demo shops (slugs `demo-*`). Remove before launch:
   `delete from public.shops where slug like 'demo-%';`
 
