@@ -40,7 +40,10 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 - Time logic uses `Asia/Manila`.
 - Never hardcode keys; use `.env.local`, document in `.env.example`.
 - Google Places: store `google_place_id` only, no other Google data.
-- Show OpenStreetMap attribution wherever OSM-imported data appears on the map.
+- Show OpenStreetMap attribution wherever OSM-imported data appears on the map. Shop pages with an
+  `osm_id` show "Some details from © OpenStreetMap contributors".
+- `supabase/seed.sql` includes 10 fictional demo shops (slugs `demo-*`). Remove before launch:
+  `delete from public.shops where slug like 'demo-%';`
 
 ## Domain
 
@@ -79,7 +82,12 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   `auth`/`storage`/roles; it is test-only.
 - `npm run db:types:local` — regenerate types from `$TEST_DATABASE_URL` (e.g. the test DB)
 - `npm test` — Vitest unit tests in `tests/` (filters, open-now)
-- Later milestones: `npm run e2e` (Playwright), `npm run import:osm`
+- `npm run import:osm` — import cafés from OpenStreetMap (Overpass, Negros province boundaries) as
+  drafts keyed by `osm_id`. Flags: `--dry-run`, `--file <overpass.json>`, `--save <path>`. Needs
+  `NEXT_PUBLIC_SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`. Re-runs refresh only untouched
+  drafts (`source = import_osm`, `status = draft`); curated shops are never overwritten. Mapping
+  logic is pure in `lib/osm.ts` (tested); writes in `lib/db/osm-import.ts`.
+- Later milestones: `npm run e2e` (Playwright)
 
 ## Database notes
 

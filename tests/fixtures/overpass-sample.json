@@ -1,0 +1,82 @@
+{
+  "version": 0.6,
+  "generator": "test fixture (fictional places)",
+  "elements": [
+    {
+      "type": "node",
+      "id": 1001,
+      "lat": 10.6771,
+      "lon": 122.9522,
+      "tags": {
+        "amenity": "cafe",
+        "name": "Kape Uno",
+        "cuisine": "coffee_shop",
+        "opening_hours": "Mo-Fr 07:00-19:00; Sa,Su 08:00-17:00",
+        "addr:street": "Lacson Street",
+        "addr:housenumber": "12",
+        "addr:city": "Bacolod City",
+        "phone": "+63 34 555 0100",
+        "contact:instagram": "kapeuno"
+      }
+    },
+    {
+      "type": "way",
+      "id": 2002,
+      "center": { "lat": 9.3071, "lon": 123.3066 },
+      "tags": {
+        "amenity": "cafe",
+        "name": "Starbucks Rizal Boulevard",
+        "brand": "Starbucks",
+        "opening_hours": "24/7"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1003,
+      "lat": 10.7942,
+      "lon": 122.9755,
+      "tags": {
+        "shop": "coffee",
+        "name": "Silay Bean Co.",
+        "opening_hours": "Mo-Su 08:00-12:00,13:00-20:00; Tu off"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1004,
+      "lat": 10.68,
+      "lon": 122.96,
+      "tags": { "amenity": "cafe", "name": "Boba Paradise", "cuisine": "bubble_tea" }
+    },
+    { "type": "node", "id": 1005, "lat": 10.681, "lon": 122.961, "tags": { "amenity": "cafe" } },
+    {
+      "type": "node",
+      "id": 1006,
+      "lat": 10.3157,
+      "lon": 123.8854,
+      "tags": { "amenity": "cafe", "name": "Cebu Brew" }
+    },
+    {
+      "type": "node",
+      "id": 1007,
+      "lat": 10.6772,
+      "lon": 122.9523,
+      "tags": {
+        "amenity": "cafe",
+        "name": "Kape Uno",
+        "opening_hours": "Mo-Su 06:00-11:00; PH off"
+      }
+    },
+    {
+      "type": "node",
+      "id": 1008,
+      "lat": 9.6,
+      "lon": 122.9,
+      "tags": {
+        "amenity": "cafe",
+        "name": "Mountain Kapihan",
+        "opening_hours": "Fr-Sa 18:00-02:00"
+      }
+    }
+  ]
+}

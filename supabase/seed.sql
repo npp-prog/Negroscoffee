@@ -65,3 +65,90 @@ values
   ('zamboanguita', 'Zamboanguita', 'negros_oriental', false, 'SRID=4326;POINT(123.1997 9.1031)')
 on conflict (slug) do update
   set name = excluded.name, province = excluded.province, is_city = excluded.is_city, center = excluded.center;
+
+-- ---------------------------------------------------------------------------
+-- Demo shops (fictional names) so the map has something to show in development.
+-- All slugs start with "demo-". Remove before launch:
+--   delete from public.shops where slug like 'demo-%';
+-- ---------------------------------------------------------------------------
+insert into public.shops
+  (slug, name, type, latte_price, description, address, city_id, province, location, hours, status, source)
+select v.slug, v.name, v.type::public.shop_type, v.latte, v.descr, v.addr,
+       c.id, c.province,
+       extensions.st_setsrid(extensions.st_makepoint(v.lng, v.lat), 4326)::extensions.geography,
+       v.hours::jsonb, 'published', 'admin'
+from (values
+  ('demo-tanaw-roastery', 'Tanaw Roastery (demo)', 'specialty', 175,
+   'Demo listing. Light-roast single origins and a slow bar for pour-overs.', 'Lacson St', 'bacolod',
+   122.9531, 10.6802,
+   '{"mon":[{"open":"07:00","close":"21:00"}],"tue":[{"open":"07:00","close":"21:00"}],"wed":[{"open":"07:00","close":"21:00"}],"thu":[{"open":"07:00","close":"21:00"}],"fri":[{"open":"07:00","close":"22:00"}],"sat":[{"open":"08:00","close":"22:00"}],"sun":[{"open":"08:00","close":"20:00"}]}'),
+  ('demo-kapihan-sa-plaza', 'Kapihan sa Plaza (demo)', 'kapihan', 75,
+   'Demo listing. Barako brewed in a kettle, pandesal and piaya all morning.', 'Plaza area', 'bacolod',
+   122.9497, 10.6688,
+   '{"mon":[{"open":"05:30","close":"11:00"}],"tue":[{"open":"05:30","close":"11:00"}],"wed":[{"open":"05:30","close":"11:00"}],"thu":[{"open":"05:30","close":"11:00"}],"fri":[{"open":"05:30","close":"11:00"}],"sat":[{"open":"05:30","close":"12:00"}],"sun":[]}'),
+  ('demo-daily-grind-mandalagan', 'Daily Grind Mandalagan (demo)', 'chain', 140,
+   'Demo listing. Branch of a regional chain, open late with plenty of outlets.', 'Mandalagan', 'bacolod',
+   122.9612, 10.6958,
+   '{"mon":[{"open":"07:00","close":"24:00"}],"tue":[{"open":"07:00","close":"24:00"}],"wed":[{"open":"07:00","close":"24:00"}],"thu":[{"open":"07:00","close":"24:00"}],"fri":[{"open":"07:00","close":"02:00"}],"sat":[{"open":"07:00","close":"02:00"}],"sun":[{"open":"07:00","close":"24:00"}]}'),
+  ('demo-daily-grind-capitol', 'Daily Grind Capitol (demo)', 'chain', 140,
+   'Demo listing. Same chain, near the Capitol lagoon.', 'Capitol area', 'bacolod',
+   122.9476, 10.6745, null),
+  ('demo-asukal-espresso-bar', 'Asukal Espresso Bar (demo)', 'specialty', 210,
+   'Demo listing. Espresso tonics and a tasting flight of Negros-grown beans.', '21st St', 'bacolod',
+   122.9555, 10.6830,
+   '{"tue":[{"open":"10:00","close":"20:00"}],"wed":[{"open":"10:00","close":"20:00"}],"thu":[{"open":"10:00","close":"20:00"}],"fri":[{"open":"10:00","close":"21:00"}],"sat":[{"open":"10:00","close":"21:00"}],"sun":[{"open":"10:00","close":"18:00"}],"mon":[]}'),
+  ('demo-balay-kape-silay', 'Balay Kape Silay (demo)', 'specialty', 150,
+   'Demo listing. Coffee in a restored ancestral house near the heritage district.', 'Rizal St', 'silay',
+   122.9741, 10.7951,
+   '{"mon":[{"open":"08:00","close":"18:00"}],"tue":[{"open":"08:00","close":"18:00"}],"wed":[{"open":"08:00","close":"18:00"}],"thu":[{"open":"08:00","close":"18:00"}],"fri":[{"open":"08:00","close":"18:00"}],"sat":[{"open":"08:00","close":"19:00"}],"sun":[{"open":"08:00","close":"19:00"}]}'),
+  ('demo-boulevard-beans', 'Boulevard Beans (demo)', 'specialty', 160,
+   'Demo listing. Sea-view counter near the boulevard, known for its cold brew.', 'Rizal Blvd', 'dumaguete',
+   123.3094, 9.3079,
+   '{"mon":[{"open":"07:00","close":"22:00"}],"tue":[{"open":"07:00","close":"22:00"}],"wed":[{"open":"07:00","close":"22:00"}],"thu":[{"open":"07:00","close":"22:00"}],"fri":[{"open":"07:00","close":"23:00"}],"sat":[{"open":"07:00","close":"23:00"}],"sun":[{"open":"07:00","close":"22:00"}]}'),
+  ('demo-kapehan-ni-nanay', 'Kapehan ni Nanay (demo)', 'kapihan', 65,
+   'Demo listing. Tablea hot chocolate and native coffee by the market.', 'Market area', 'dumaguete',
+   123.3040, 9.3102,
+   '{"mon":[{"open":"06:00","close":"14:00"}],"tue":[{"open":"06:00","close":"14:00"}],"wed":[{"open":"06:00","close":"14:00"}],"thu":[{"open":"06:00","close":"14:00"}],"fri":[{"open":"06:00","close":"14:00"}],"sat":[{"open":"06:00","close":"14:00"}],"sun":[{"open":"06:00","close":"12:00"}]}'),
+  ('demo-campus-cup', 'Campus Cup (demo)', 'chain', 120,
+   'Demo listing. Student favorite near the university, open 24 hours.', 'Hibbard Ave', 'dumaguete',
+   123.3006, 9.3141,
+   '{"mon":[{"open":"00:00","close":"24:00"}],"tue":[{"open":"00:00","close":"24:00"}],"wed":[{"open":"00:00","close":"24:00"}],"thu":[{"open":"00:00","close":"24:00"}],"fri":[{"open":"00:00","close":"24:00"}],"sat":[{"open":"00:00","close":"24:00"}],"sun":[{"open":"00:00","close":"24:00"}]}'),
+  ('demo-reef-and-roast', 'Reef & Roast Dauin (demo)', 'specialty', 230,
+   'Demo listing. Beachside espresso bar popular with divers.', 'National Highway', 'dauin',
+   123.2671, 9.1932,
+   '{"mon":[{"open":"06:30","close":"17:00"}],"tue":[{"open":"06:30","close":"17:00"}],"wed":[{"open":"06:30","close":"17:00"}],"thu":[{"open":"06:30","close":"17:00"}],"fri":[{"open":"06:30","close":"17:00"}],"sat":[{"open":"06:30","close":"17:00"}],"sun":[{"open":"06:30","close":"17:00"}]}')
+) as v(slug, name, type, latte, descr, addr, city, lng, lat, hours)
+join public.cities c on c.slug = v.city
+on conflict (slug) do update
+  set name = excluded.name, type = excluded.type, latte_price = excluded.latte_price,
+      price_tier = public.price_tier_for(excluded.latte_price),
+      description = excluded.description, address = excluded.address, city_id = excluded.city_id,
+      province = excluded.province, location = excluded.location, hours = excluded.hours,
+      status = excluded.status;
+
+-- Demo menus (replaced on every run).
+delete from public.menu_items m using public.shops s where m.shop_id = s.id and s.slug like 'demo-%';
+insert into public.menu_items (shop_id, name, price, category, sort_order)
+select s.id, m.name, m.price, m.category, m.ord
+from public.shops s
+join (values
+  ('demo-tanaw-roastery', 'Hot latte 12 oz', 175, 'Espresso', 1),
+  ('demo-tanaw-roastery', 'Cortado', 150, 'Espresso', 2),
+  ('demo-tanaw-roastery', 'Pour-over of the day', 220, 'Slow bar', 3),
+  ('demo-kapihan-sa-plaza', 'Kapeng barako', 45, 'Coffee', 1),
+  ('demo-kapihan-sa-plaza', 'Hot latte 12 oz', 75, 'Coffee', 2),
+  ('demo-kapihan-sa-plaza', 'Piaya', 25, 'Merienda', 3),
+  ('demo-daily-grind-mandalagan', 'Hot latte 12 oz', 140, 'Espresso', 1),
+  ('demo-daily-grind-mandalagan', 'Iced caramel macchiato', 165, 'Espresso', 2),
+  ('demo-asukal-espresso-bar', 'Hot latte 12 oz', 210, 'Espresso', 1),
+  ('demo-asukal-espresso-bar', 'Espresso tonic', 230, 'Signature', 2),
+  ('demo-balay-kape-silay', 'Hot latte 12 oz', 150, 'Coffee', 1),
+  ('demo-balay-kape-silay', 'Napoleones', 45, 'Pastries', 2),
+  ('demo-boulevard-beans', 'Hot latte 12 oz', 160, 'Espresso', 1),
+  ('demo-boulevard-beans', 'Cold brew', 170, 'Cold', 2),
+  ('demo-kapehan-ni-nanay', 'Tablea chocolate', 60, 'Drinks', 1),
+  ('demo-kapehan-ni-nanay', 'Hot latte 12 oz', 65, 'Drinks', 2),
+  ('demo-campus-cup', 'Hot latte 12 oz', 120, 'Coffee', 1),
+  ('demo-reef-and-roast', 'Hot latte 12 oz', 230, 'Espresso', 1),
+  ('demo-reef-and-roast', 'Flat white', 220, 'Espresso', 2)
+) as m(slug, name, price, category, ord) on m.slug = s.slug;

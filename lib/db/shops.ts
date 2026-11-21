@@ -140,6 +140,9 @@ export type ShopDetail = ShopCard & {
   facebookUrl: string | null;
   instagramUrl: string | null;
   website: string | null;
+  source: ShopRow["source"];
+  /** OpenStreetMap id ("node/123") for imported shops. */
+  osmId: string | null;
   photos: Pick<ShopPhotoRow, "id" | "storage_path" | "caption">[];
   menu: Pick<MenuItemRow, "id" | "name" | "price" | "category">[];
 };
@@ -152,7 +155,7 @@ export async function getShopBySlug(db: Db, slug: string): Promise<ShopDetail | 
   const [shop, photos, menu] = await Promise.all([
     db
       .from("shops")
-      .select("description, phone, facebook_url, instagram_url, website")
+      .select("description, phone, facebook_url, instagram_url, website, source, osm_id")
       .eq("id", base.id)
       .single(),
     db
@@ -167,9 +170,12 @@ export async function getShopBySlug(db: Db, slug: string): Promise<ShopDetail | 
       .order("sort_order"),
   ]);
   const extra =
-    unwrap<Pick<ShopRow, "description" | "phone" | "facebook_url" | "instagram_url" | "website">>(
-      shop,
-    );
+    unwrap<
+      Pick<
+        ShopRow,
+        "description" | "phone" | "facebook_url" | "instagram_url" | "website" | "source" | "osm_id"
+      >
+    >(shop);
   return {
     ...base,
     description: extra.description,
@@ -177,6 +183,8 @@ export async function getShopBySlug(db: Db, slug: string): Promise<ShopDetail | 
     facebookUrl: extra.facebook_url,
     instagramUrl: extra.instagram_url,
     website: extra.website,
+    source: extra.source,
+    osmId: extra.osm_id,
     photos: unwrap(photos),
     menu: unwrap(menu),
   };

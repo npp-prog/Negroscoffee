@@ -292,6 +292,21 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
             </section>
           </aside>
         </div>
+
+        {shop.osmId && (
+          <p className="text-[12px] text-muted-foreground">
+            Some details from{" "}
+            <a
+              href={`https://www.openstreetmap.org/${shop.osmId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-foreground"
+            >
+              © OpenStreetMap contributors
+            </a>{" "}
+            (ODbL).
+          </p>
+        )}
       </article>
     </PageShell>
   );

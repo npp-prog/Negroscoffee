@@ -2,6 +2,9 @@
 -- Run via supabase/tests/run.sh. Each block raises on failure (ON_ERROR_STOP).
 
 -- Fixtures (as superuser, bypassing RLS) -------------------------------------
+-- Tests own their fixtures: drop the seed's demo shops first.
+delete from public.shops where slug like 'demo-%';
+
 insert into auth.users (id, email, raw_user_meta_data) values
   ('00000000-0000-0000-0000-00000000000a', 'admin@example.test', '{"full_name":"Ada Admin"}'),
   ('00000000-0000-0000-0000-00000000000b', 'owner@example.test', '{}'),

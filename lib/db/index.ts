@@ -4,3 +4,4 @@ export * from "./hours";
 export * from "./shops";
 export * from "./cities";
 export type { Database, Json } from "./types";
+export * from "./osm-import";
