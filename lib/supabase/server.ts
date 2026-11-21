@@ -3,6 +3,7 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 
 import type { Database } from "@/lib/db/types";
 import { publicEnv } from "@/lib/env";
@@ -12,6 +13,8 @@ import { publicEnv } from "@/lib/env";
  * signed-in user (RLS applies). Reads cookies, so the calling route renders dynamically.
  */
 export async function getServerSupabase() {
+  // Session handling reads the clock; keep it out of prerenders and prefetches (request time only).
+  await connection();
   const env = publicEnv();
   const cookieStore = await cookies();
   return createServerClient<Database>(

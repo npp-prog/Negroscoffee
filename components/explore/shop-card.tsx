@@ -9,12 +9,12 @@ import { TypeChip } from "@/components/shop/type-chip";
 import { SHOP_TYPE_META } from "@/lib/categories";
 import { shopPhotoUrl, type ShopCard as Shop } from "@/lib/db";
 import { formatDistance } from "@/lib/geo";
-import { getBrowserSupabase } from "@/lib/supabase/browser";
+import { SUPABASE_URL } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 function Thumb({ shop, className }: { shop: Shop; className?: string }) {
   if (shop.coverPath) {
-    const src = shopPhotoUrl(getBrowserSupabase(), shop.coverPath, { width: 160, height: 160 });
+    const src = shopPhotoUrl(SUPABASE_URL, shop.coverPath, { width: 160, height: 160 });
     return (
       // Supabase image transforms do the resizing; next/image would resize twice.
       // eslint-disable-next-line @next/next/no-img-element

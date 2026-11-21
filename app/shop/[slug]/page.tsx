@@ -25,7 +25,7 @@ import { TypeChip } from "@/components/shop/type-chip";
 import { Button } from "@/components/ui/button";
 import { PRICE_TIER_META, PROVINCE_LABEL, SHOP_TYPE_META } from "@/lib/categories";
 import { shopPhotoUrl, WEEKDAYS, type ShopDetail } from "@/lib/db";
-import { getPublicSupabase } from "@/lib/supabase/server";
+import { SUPABASE_URL } from "@/lib/env";
 
 export async function generateStaticParams() {
   return getPrerenderSlugs();
@@ -114,10 +114,9 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
   const shop = await getPublicShop(slug);
   if (!shop) notFound();
 
-  const db = getPublicSupabase();
   const photos = shop.photos.map((p, i) => ({
     id: p.id,
-    src: shopPhotoUrl(db, p.storage_path, { width: 1200, height: 800 }),
+    src: shopPhotoUrl(SUPABASE_URL, p.storage_path, { width: 1200, height: 800 }),
     alt: p.caption ?? `${shop.name} photo ${i + 1}`,
   }));
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";

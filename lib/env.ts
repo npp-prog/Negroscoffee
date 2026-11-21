@@ -26,3 +26,6 @@ export function publicEnv() {
 export function hasSupabaseEnv() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }
+
+/** Supabase project URL for building public asset URLs (empty when not configured). */
+export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

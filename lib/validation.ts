@@ -150,3 +150,126 @@ export function fieldErrors(error: z.ZodError): Record<string, string> {
   }
   return out;
 }
+
+// --- admin shop editor ------------------------------------------------------------------------
+
+const nullableText = (max: number) =>
+  trimmed(max)
+    .optional()
+    .transform((v) => (v ? v : null));
+
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+const CLOSE_RE = /^(([01]\d|2[0-3]):[0-5]\d|24:00)$/;
+const rangeSchema = z.object({
+  open: z.string().regex(TIME_RE),
+  close: z.string().regex(CLOSE_RE),
+});
+const DAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+
+/** Hours JSON from the editor: { mon: [{open, close}], ... }; missing day = unknown. */
+export const hoursJsonSchema = z
+  .string()
+  .optional()
+  .transform((s, ctx) => {
+    if (!s) return null;
+    try {
+      return JSON.parse(s) as unknown;
+    } catch {
+      ctx.addIssue({ code: "custom", message: "Invalid hours" });
+      return z.NEVER;
+    }
+  })
+  .pipe(z.partialRecord(z.enum(DAY_KEYS), z.array(rangeSchema).max(4)).nullable())
+  .transform((h) => (h && Object.keys(h).length ? h : null));
+
+export const menuJsonSchema = z
+  .string()
+  .optional()
+  .transform((s, ctx) => {
+    if (!s) return [];
+    try {
+      return JSON.parse(s) as unknown;
+    } catch {
+      ctx.addIssue({ code: "custom", message: "Invalid menu" });
+      return z.NEVER;
+    }
+  })
+  .pipe(
+    z
+      .array(
+        z.object({
+          name: z.string().trim().min(1, "Menu item needs a name").max(80),
+          price: z.preprocess(
+            (v) => (v === "" || v == null ? undefined : v),
+            z.coerce
+              .number({ message: "Each menu item needs a price" })
+              .min(0, "Price can't be negative")
+              .max(100000),
+          ),
+          category: z
+            .string()
+            .trim()
+            .max(40)
+            .nullish()
+            .transform((v) => v || null),
+        }),
+      )
+      .max(100, "Keep the menu under 100 items"),
+  );
+
+export const adminShopSchema = z.object({
+  name: trimmed(120).min(1, "Name is required"),
+  slug: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .regex(SLUG, "Use lowercase letters, numbers and dashes")
+    .max(80),
+  type: z
+    .enum(SHOP_TYPES)
+    .optional()
+    .or(z.literal("").transform(() => undefined))
+    .transform((v) => v ?? null),
+  lattePrice: optionalPrice.transform((v) => v ?? null),
+  priceTier: z
+    .enum(["", "1", "2", "3", "4"])
+    .optional()
+    .transform((v) => (v ? (Number(v) as 1 | 2 | 3 | 4) : null)),
+  status: z.enum(["draft", "published", "hidden"]),
+  verified: z
+    .literal("on")
+    .optional()
+    .transform((v) => v === "on"),
+  description: nullableText(2000),
+  address: nullableText(200),
+  cityId: z
+    .string()
+    .uuid()
+    .optional()
+    .or(z.literal("").transform(() => undefined))
+    .transform((v) => v ?? null),
+  province: z
+    .enum(["negros_occidental", "negros_oriental"])
+    .optional()
+    .or(z.literal("").transform(() => undefined))
+    .transform((v) => v ?? null),
+  lat: z.coerce
+    .number({ message: "Set the location" })
+    .min(8.5, "Location must be on Negros")
+    .max(11.6, "Location must be on Negros"),
+  lng: z.coerce
+    .number({ message: "Set the location" })
+    .min(121.8, "Location must be on Negros")
+    .max(124.2, "Location must be on Negros"),
+  hours: hoursJsonSchema,
+  menu: menuJsonSchema,
+  phone: nullableText(40),
+  facebookUrl: nullableText(300),
+  instagramUrl: nullableText(300),
+  website: nullableText(300),
+  googlePlaceId: nullableText(300).refine(
+    (v) => !v || /^[\w-]{10,}$/.test(v),
+    "Paste only the Place ID (e.g. ChIJ…)",
+  ),
+});
+export type AdminShopInput = z.infer<typeof adminShopSchema>;

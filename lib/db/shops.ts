@@ -196,13 +196,20 @@ export async function listPublishedSlugs(db: Db) {
   return rows;
 }
 
-/** Public URL of a photo in the `shop-photos` bucket. */
+/**
+ * Public URL of a photo in the `shop-photos` bucket, built from the project URL alone (no client,
+ * so it is safe to call while rendering). With a size it uses Supabase image transforms.
+ */
 export function shopPhotoUrl(
-  db: Db,
+  supabaseUrl: string,
   storagePath: string,
   opts?: { width?: number; height?: number },
 ) {
-  return db.storage.from("shop-photos").getPublicUrl(storagePath, {
-    ...(opts ? { transform: { ...opts, resize: "cover" as const } } : {}),
-  }).data.publicUrl;
+  const base = supabaseUrl.replace(/\/+$/, "");
+  const path = storagePath.split("/").map(encodeURIComponent).join("/");
+  if (!opts) return `${base}/storage/v1/object/public/shop-photos/${path}`;
+  const qs = new URLSearchParams({ resize: "cover" });
+  if (opts.width) qs.set("width", String(opts.width));
+  if (opts.height) qs.set("height", String(opts.height));
+  return `${base}/storage/v1/render/image/public/shop-photos/${path}?${qs}`;
 }

@@ -48,6 +48,16 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   Photos are resized in the browser and stored privately in `submission-proofs` (`claims/`,
   `suggestions/`); server caps 3 MB, `serverActions.bodySizeLimit` is 4 MB. Spam guard = honeypot
   `website_hp` + minimum fill time (`startedAt`, set after mount). Admins review in milestone 7.
+- Auth: `/login` (magic link + Google via `signInWithOtp` / `signInWithOAuth`, PKCE) →
+  `/auth/callback` exchanges the code; `proxy.ts` refreshes the session on `/admin` and `/login`.
+  `getServerSupabase()` calls `await connection()` first (session code reads the clock, which
+  prerenders and partial prefetches don't allow). `safeNext()` in `lib/auth.ts` blocks open redirects.
+- Admin (`/admin`): `app/admin/layout.tsx` gates on `profiles.role = 'admin'` inside Suspense.
+  Every admin Server Action calls `requireAdmin()` (actions are public endpoints); writes use the
+  admin's own client (RLS admin policies), never the service role. After shop writes call
+  `expireShops([slugs])` (`updateTag`) so public pages refresh. Data access: `lib/db/admin.ts`.
+- Photo URLs: build with `shopPhotoUrl(SUPABASE_URL, path, size?)`; never create a Supabase client
+  during render just for URLs.
 - `supabase/seed.sql` includes 10 fictional demo shops (slugs `demo-*`). Remove before launch:
   `delete from public.shops where slug like 'demo-%';`
 
