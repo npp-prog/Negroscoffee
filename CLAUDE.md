@@ -59,6 +59,11 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 - `/admin/review`: one-card-at-a-time draft review (type, latte price or tier, Publish / "Not a
   coffee shop" (hidden) / Skip), ordered by province → town → name. `quickReviewShop()` refuses to
   publish without type, tier/price and province.
+- PWA: `app/manifest.ts`, icons in `public/icons/` (rendered from the logo mark), `public/sw.js`
+  (offline fallback `/offline` + cache-first `/_next/static` and icons; never caches pages, admin,
+  Supabase or tiles), registered by `components/pwa-register.tsx` in production only. Bump
+  `VERSION` in `sw.js` when changing caching. SEO: `app/sitemap.ts` (published shops, cached with
+  tag `shops`), `app/robots.ts` (disallows /admin, /login, /auth/, /claim/).
 - Photo URLs: build with `shopPhotoUrl(SUPABASE_URL, path, size?)`; never create a Supabase client
   during render just for URLs.
 - `supabase/seed.sql` includes 10 fictional demo shops (slugs `demo-*`). Remove before launch:
@@ -109,7 +114,9 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   Also runnable from GitHub: Actions → "Import from OpenStreetMap" (`.github/workflows/import-osm.yml`,
   manual trigger, optional dry run; needs repo secrets `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`).
   The script cycles through several Overpass endpoints with exponential backoff (up to `OVERPASS_DEADLINE_MIN`, default 25) and fails if OSM returns no places; the workflow uses `set -o pipefail` so a failed import shows red.
-- Later milestones: `npm run e2e` (Playwright)
+- `npm run e2e` — production build + Playwright smoke tests in `e2e/` (desktop + mobile), run with
+  no Supabase/MapTiler keys so pages must degrade gracefully. CI: `.github/workflows/ci.yml` (lint,
+  types, format, unit, `db:test` on a PostGIS service, e2e).
 
 ## Database notes
 

@@ -1,31 +1,154 @@
 # Kape Negros
 
-A map-first web app listing every coffee shop on Negros Island, Philippines, by price tier and shop type.
+A map-first web app listing coffee shops on Negros Island, Philippines (Negros Occidental and
+Negros Oriental), filterable by **price tier** (from the price of a 12 oz hot latte) and **shop
+type** (specialty, chain, local kapihan). Installable on phones as an app (PWA).
 
-Status: Phase 1 in progress (see [PLAN.md](./PLAN.md)). Full setup, migration and deploy docs come in milestone 8.
+- **Visitors:** map with clustered pins, filters and search kept in the URL, "near me", open-now
+  in Philippine time, shop pages with hours, menu prices, photos and directions.
+- **Community:** suggest a shop, suggest an edit, claim a shop as its owner.
+- **Admins:** dashboard, quick review of imported drafts, full shop editor (pin, hours, menu,
+  photos), submissions queue, bulk publish/hide.
+- **Data:** your own Supabase database; cafés can be imported from OpenStreetMap.
 
-## Quick start
+Built with Next.js 16, Tailwind CSS 4, MapLibre + MapTiler, Supabase (Postgres + PostGIS, Auth,
+Storage), TanStack Query and Zod. See [PLAN.md](./PLAN.md) for the milestones and
+[CLAUDE.md](./CLAUDE.md) for architecture notes and conventions.
+
+---
+
+## 1. Accounts and keys you need
+
+| Service                                      | What for                  | Where to find the values                                       |
+| -------------------------------------------- | ------------------------- | -------------------------------------------------------------- |
+| [Supabase](https://supabase.com) (free tier) | Database, sign-in, photos | Project Settings → **API Keys** / **Data API**                 |
+| [MapTiler](https://cloud.maptiler.com)       | Map tiles                 | Account → **Keys** (restrict it to your domains)               |
+| [Vercel](https://vercel.com) (Hobby)         | Hosting                   | Import the GitHub repository                                   |
+| Google Cloud (optional)                      | "Continue with Google"    | APIs & Services → Credentials → OAuth client (Web application) |
+
+Environment variables (see [`.env.example`](./.env.example)):
+
+| Variable                        | Required | Notes                                                                      |
+| ------------------------------- | -------- | -------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | `https://<project-ref>.supabase.co`                                        |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | The public anon / publishable key                                          |
+| `NEXT_PUBLIC_MAPTILER_KEY`      | yes      | Without it the app works but shows a placeholder instead of the map        |
+| `NEXT_PUBLIC_SITE_URL`          | no       | Your public URL; defaults to Vercel's production URL                       |
+| `SUPABASE_SERVICE_ROLE_KEY`     | import   | Only for the OpenStreetMap import. Secret: never in the browser or in code |
+
+`NEXT_PUBLIC_*` values are baked in at build time: after changing them in Vercel, **redeploy**.
+
+## 2. Set up the database (Supabase, in the browser)
+
+1. Create a Supabase project. Southeast Asia (Singapore) is closest to Negros.
+2. Open **SQL Editor → New query** and run, in order, each file in
+   [`supabase/migrations/`](./supabase/migrations/):
+   1. `…01_core_schema.sql` — tables, PostGIS, price-tier trigger
+   2. `…02_rls_and_search.sql` — row-level security, `shop_cards` view, search functions
+   3. `…03_storage.sql` — `shop-photos` (public) and `submission-proofs` (private) buckets
+   4. `…04_api_grants.sql` — table privileges for the API roles (needed on newer projects)
+3. Run [`supabase/seed.sql`](./supabase/seed.sql): 57 Negros cities/municipalities plus 10
+   fictional demo shops (slugs `demo-*`). Remove the demos before launch:
+
+   ```sql
+   delete from public.shops where slug like 'demo-%';
+   ```
+
+Each file runs once; the grants file is safe to re-run. With the Supabase CLI instead:
+`npx supabase link` then `npm run db:push`, and `psql "$DATABASE_URL" -f supabase/seed.sql`.
+
+## 3. Sign-in and your admin account
+
+1. Supabase → **Authentication → URL Configuration**
+   - **Site URL:** your site, e.g. `https://kapenegros.vercel.app`
+   - **Redirect URLs:** `https://<your-domain>/auth/callback` (and
+     `http://localhost:3000/auth/callback` for local development)
+2. **Authentication → Sign In / Providers:** Email is on by default (magic link). For Google:
+   create an OAuth client (type _Web application_) in Google Cloud with
+   - Authorized JavaScript origin: `https://<your-domain>`
+   - Authorized redirect URI: `https://<project-ref>.supabase.co/auth/v1/callback`
+
+   publish the consent screen, then paste the client ID and secret into the Google provider.
+
+3. Sign in once at `/login`, then make yourself admin in the SQL editor:
+
+   ```sql
+   update profiles set role = 'admin'
+   where id = (select id from auth.users where email = 'you@example.com');
+   ```
+
+4. Open `/admin`.
+
+## 4. Deploy (Vercel)
+
+1. Vercel → **Add New → Project** → import this repository.
+2. Add the environment variables from section 1 (Production and Preview).
+3. Deploy. Pushes to `main` deploy to production automatically.
+4. Optional: Settings → Functions → **Region** to match your Supabase region (e.g. Singapore)
+   for faster admin pages.
+5. Add your domain(s) to the MapTiler key's **Allowed HTTP Origins**, one per line:
+
+   ```
+   kapenegros.vercel.app
+   *.vercel.app
+   ```
+
+## 5. Add real coffee shops
+
+- **From OpenStreetMap (no computer needed):** add repository secrets `SUPABASE_URL` and
+  `SUPABASE_SERVICE_ROLE_KEY` (GitHub → Settings → Secrets and variables → Actions), then
+  **Actions → Import from OpenStreetMap → Run workflow** (try _Dry run_ first). Places arrive
+  as drafts; safe to re-run (only untouched drafts are refreshed).
+- **Review them:** `/admin/review` shows one draft at a time: pick the type, enter the latte price
+  or tap a tier, then Publish, "Not a coffee shop", or Skip.
+- **By hand:** `/admin/shops/new`.
+- **From visitors:** suggestions and claims appear in `/admin/submissions`.
+
+Locally: `npm run import:osm -- --dry-run`, then `npm run import:osm`.
+
+## 6. Develop locally
+
+Requires Node.js 22.
 
 ```bash
 npm install
-cp .env.example .env.local   # fill in Supabase + MapTiler keys
+cp .env.example .env.local   # fill in the keys
 npm run dev                  # http://localhost:3000
 ```
 
-Scripts: `npm run lint`, `npm run typecheck`, `npm run format`, `npm run build`.
+| Command                                 | What it does                                                       |
+| --------------------------------------- | ------------------------------------------------------------------ |
+| `npm run lint` / `typecheck` / `format` | ESLint, TypeScript, Prettier                                       |
+| `npm test`                              | Vitest unit tests (`tests/`)                                       |
+| `npm run e2e`                           | Production build + Playwright smoke tests (`e2e/`, no keys needed) |
+| `npm run db:test`                       | Migrations + seed + RLS/search tests on a local PostGIS database   |
+| `npm run import:osm`                    | OpenStreetMap import (`--dry-run`, `--file`, `--save`)             |
+| `npm run db:push` / `db:types`          | Apply migrations / regenerate `lib/db/types.ts` (Supabase CLI)     |
 
-## Supabase auth setup (one time)
+`npm run db:test` needs PostgreSQL with PostGIS and `PGHOST`/`PGPORT`/`PGUSER` (and
+`PGPASSWORD`) set; it uses a small shim that fakes Supabase's `auth`/`storage` schemas.
 
-1. Authentication → URL Configuration: set **Site URL** to your site, and add
-   `http://localhost:3000/auth/callback` and `https://<your-domain>/auth/callback` to **Redirect URLs**.
-2. Authentication → Providers: enable **Email** (magic link) and, optionally, **Google** (needs a
-   Google OAuth client ID/secret; authorized redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`).
-3. Sign in once at `/login`, then make yourself admin in the SQL editor:
-   `update profiles set role = 'admin' where id = (select id from auth.users where email = 'you@example.com');`
+**CI:** [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) runs lint, types, formatting,
+unit tests, database tests (PostGIS service) and the Playwright smoke tests on every push to
+`main` and every pull request.
 
-## Import real cafés from OpenStreetMap
+## 7. Project layout
 
-From GitHub (no computer needed): add repository secrets `SUPABASE_URL` and
-`SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets and variables → Actions), then Actions →
-**Import from OpenStreetMap** → Run workflow. Places arrive in `/admin` as drafts; set type and
-latte price, then publish. Or locally: `npm run import:osm -- --dry-run`, then `npm run import:osm`.
+```
+app/                Next.js routes: map (/), /shop/[slug], /suggest, /claim/[slug], /login,
+                    /admin/*, manifest, sitemap, robots, offline page
+components/         UI: explore (map shell, list, sheet), map, shop, forms, admin, ui
+hooks/              Client hooks (URL state, shops query, media query, …)
+lib/                Framework-free logic: db/ (data layer), filters, hours, osm, validation, …
+lib/supabase/       Browser, server and service-role clients
+scripts/            import-osm.ts
+supabase/           migrations/, seed.sql, tests/
+public/             icons, service worker (sw.js)
+e2e/, tests/        Playwright smoke tests, Vitest unit tests
+```
+
+## Credits
+
+Map data © [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL); map
+tiles © [MapTiler](https://www.maptiler.com/copyright/). Shops imported from OpenStreetMap show
+an attribution on their page.

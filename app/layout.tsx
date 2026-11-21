@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
 
 import { Providers } from "@/components/providers";
+import { PwaRegister } from "@/components/pwa-register";
 import { Toaster } from "@/components/ui/sonner";
 import { siteUrl } from "@/lib/site";
 import "./globals.css";
@@ -23,6 +24,14 @@ export const metadata: Metadata = {
     "Find every coffee shop on Negros Island — Bacolod, Dumaguete and beyond — by price and style, on one beautiful map.",
   applicationName: "Kape Negros",
   appleWebApp: { capable: true, title: "Kape Negros", statusBarStyle: "default" },
+  icons: {
+    icon: [
+      { url: "/icons/icon.svg", type: "image/svg+xml" },
+      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+  },
+  openGraph: { siteName: "Kape Negros", locale: "en_PH", type: "website" },
 };
 
 export const viewport: Viewport = {
@@ -42,6 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Providers>
           {children}
           <Toaster />
+          <PwaRegister />
         </Providers>
       </body>
     </html>
