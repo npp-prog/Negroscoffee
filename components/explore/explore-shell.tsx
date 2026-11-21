@@ -208,9 +208,16 @@ export function ExploreShell() {
           title="Couldn't load shops"
           body="Check your connection and try again."
           action={
-            <Button variant="outline" size="sm" onClick={() => shopsQuery.refetch()}>
-              Try again
-            </Button>
+            <div className="flex flex-col items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => shopsQuery.refetch()}>
+                Try again
+              </Button>
+              {shopsQuery.error?.message && (
+                <p className="max-w-xs font-mono text-[11px] break-words text-muted-foreground">
+                  Details: {shopsQuery.error.message}
+                </p>
+              )}
+            </div>
           }
         />
       );
