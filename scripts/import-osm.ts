@@ -57,36 +57,60 @@ function describe(err: unknown): string {
   return cause ? `${err.message} (${cause.code ?? ""} ${cause.message ?? ""})`.trim() : err.message;
 }
 
-/** Query Overpass, trying each endpoint in turn (public servers are often busy). */
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** First line of an error page, without HTML noise. */
+function brief(text: string): string {
+  return (
+    text
+      .replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .slice(0, 140) || "(empty body)"
+  );
+}
+
+/**
+ * Query Overpass. Public servers are often "at capacity", so cycle through every endpoint in
+ * rounds with exponential backoff (30 s, 1, 2, 4, 8 min + jitter) as the servers ask, until it
+ * works or the overall deadline (default 25 min, OVERPASS_DEADLINE_MIN) passes.
+ */
 async function fetchOverpass(): Promise<{ elements: OverpassElement[]; remark?: string }> {
+  const deadline = Date.now() + Number(process.env.OVERPASS_DEADLINE_MIN ?? 25) * 60_000;
+  const endpoints = [...new Set(OVERPASS_ENDPOINTS)];
   let lastError = "";
-  for (const url of [...new Set(OVERPASS_ENDPOINTS)]) {
-    for (let attempt = 1; attempt <= 2; attempt++) {
-      console.log(`Querying ${url} (attempt ${attempt}) …`);
+  for (let round = 0; ; round++) {
+    for (const url of endpoints) {
+      const left = deadline - Date.now();
+      if (left < 15_000)
+        throw new Error(
+          `Overpass servers stayed busy until the deadline. Last error: ${lastError}`,
+        );
+      console.log(`Round ${round + 1}: querying ${url} …`);
       try {
         const res = await fetch(url, {
           method: "POST",
           headers: {
             "content-type": "application/x-www-form-urlencoded",
-            "user-agent": "kape-negros-osm-import/1.0",
+            "user-agent": "kape-negros-osm-import/1.0 (+https://github.com/npp-prog/Negroscoffee)",
           },
           body: new URLSearchParams({ data: overpassQuery() }),
-          signal: AbortSignal.timeout(150_000),
+          signal: AbortSignal.timeout(Math.min(150_000, left)),
         });
         if (res.ok) return res.json();
-        lastError = `HTTP ${res.status} ${(await res.text()).slice(0, 200)}`;
-        console.warn(`  failed: ${lastError}`);
-        // Only "busy" responses are worth a second try on the same server.
-        if (![429, 502, 503, 504].includes(res.status)) break;
+        lastError = `HTTP ${res.status}: ${brief(await res.text())}`;
       } catch (err) {
         lastError = describe(err);
-        console.warn(`  failed: ${lastError}`);
-        if (/timeout|aborted/i.test(lastError)) break; // slow server: move on
       }
-      await new Promise((r) => setTimeout(r, 5_000 * attempt));
+      console.warn(`  busy/failed: ${lastError}`);
     }
+    const wait = Math.min(30_000 * 2 ** round, 8 * 60_000) + Math.random() * 10_000;
+    if (Date.now() + wait > deadline) {
+      throw new Error(`Overpass servers stayed busy until the deadline. Last error: ${lastError}`);
+    }
+    console.log(`All servers busy. Waiting ${Math.round(wait / 1000)} s before the next round …`);
+    await sleep(wait);
   }
-  throw new Error(`All Overpass endpoints failed. Last error: ${lastError}`);
 }
 
 async function main() {
