@@ -554,3 +554,101 @@ export async function createDraftFromSuggestion(
 async function slugExists(db: Db, slug: string) {
   return unwrap(await db.from("shops").select("id").eq("slug", slug)).length > 0;
 }
+
+// --- quick review of drafts ---------------------------------------------------------------
+
+export type ReviewDraft = {
+  id: string;
+  slug: string;
+  name: string;
+  type: ShopType | null;
+  lattePrice: number | null;
+  province: Province | null;
+  cityName: string | null;
+  address: string | null;
+  phone: string | null;
+  website: string | null;
+  osmId: string | null;
+  lat: number | null;
+  lng: number | null;
+};
+
+/** Drafts to review, grouped by province and town so nearby shops come together. */
+export async function listDraftsForReview(db: Db, opts: { limit?: number; town?: string } = {}) {
+  let q = db
+    .from("shops")
+    .select(
+      "id, slug, name, type, latte_price, province, address, phone, website, osm_id, location, cities(name)",
+      { count: "exact" },
+    )
+    .eq("status", "draft")
+    .order("province", { ascending: true, nullsFirst: false })
+    .order("city_id", { ascending: true, nullsFirst: false })
+    .order("name")
+    .limit(opts.limit ?? 30);
+  if (opts.town) q = q.eq("city_id", opts.town);
+  const { data, count: total, error } = await q;
+  if (error) throw new Error(error.message);
+  const drafts: ReviewDraft[] = (data ?? []).map((r) => {
+    const p = parsePoint(r.location);
+    return {
+      id: r.id,
+      slug: r.slug,
+      name: r.name,
+      type: r.type,
+      lattePrice: r.latte_price,
+      province: r.province,
+      cityName: (r.cities as { name: string } | null)?.name ?? null,
+      address: r.address,
+      phone: r.phone,
+      website: r.website,
+      osmId: r.osm_id,
+      lat: p?.lat ?? null,
+      lng: p?.lng ?? null,
+    };
+  });
+  return { drafts, total: total ?? 0 };
+}
+
+export type QuickDecision = {
+  status: "published" | "hidden";
+  type: ShopType | null;
+  lattePrice: number | null;
+  priceTier: PriceTier | null;
+};
+
+/**
+ * Publish or hide a draft in one step. Publishing needs a type, a tier (or latte price, which
+ * the DB turns into a tier) and a province; returns a reason instead of throwing when not.
+ */
+export async function quickReviewShop(
+  db: Db,
+  id: string,
+  d: QuickDecision,
+): Promise<{ ok: true; slug: string } | { ok: false; reason: string }> {
+  const row = unwrap<{ slug: string; province: Province | null; status: ShopStatus } | null>(
+    await db.from("shops").select("slug, province, status").eq("id", id).maybeSingle(),
+  );
+  if (!row) return { ok: false, reason: "Shop not found" };
+  if (d.status === "published") {
+    if (!d.type) return { ok: false, reason: "Pick a type first" };
+    if (!d.priceTier && d.lattePrice == null)
+      return { ok: false, reason: "Add a latte price or pick a tier" };
+    if (!row.province)
+      return { ok: false, reason: "No town/province yet: open the full editor to set it" };
+  }
+  unwrap(
+    await db
+      .from("shops")
+      .update({
+        status: d.status,
+        ...(d.type ? { type: d.type } : {}),
+        ...(d.lattePrice != null ? { latte_price: d.lattePrice } : {}),
+        // Explicit tier wins; otherwise leave null so the trigger derives it from the price.
+        price_tier: d.priceTier ?? null,
+      })
+      .eq("id", id)
+      .select("id"),
+  );
+  return { ok: true, slug: row.slug };
+}

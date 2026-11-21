@@ -70,7 +70,7 @@ export default async function AdminDashboard() {
           <Stat
             label="OSM drafts to review"
             value={counts.shops.imported}
-            href="/admin/shops?status=draft"
+            href="/admin/review"
             accent
           />
         </div>

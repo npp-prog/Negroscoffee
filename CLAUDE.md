@@ -56,6 +56,9 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   Every admin Server Action calls `requireAdmin()` (actions are public endpoints); writes use the
   admin's own client (RLS admin policies), never the service role. After shop writes call
   `expireShops([slugs])` (`updateTag`) so public pages refresh. Data access: `lib/db/admin.ts`.
+- `/admin/review`: one-card-at-a-time draft review (type, latte price or tier, Publish / "Not a
+  coffee shop" (hidden) / Skip), ordered by province → town → name. `quickReviewShop()` refuses to
+  publish without type, tier/price and province.
 - Photo URLs: build with `shopPhotoUrl(SUPABASE_URL, path, size?)`; never create a Supabase client
   during render just for URLs.
 - `supabase/seed.sql` includes 10 fictional demo shops (slugs `demo-*`). Remove before launch:
