@@ -57,12 +57,26 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 - Motion: Framer Motion springs, 150–250ms, respect `prefers-reduced-motion`.
 - Accessibility: WCAG AA, focus rings, 44px touch targets, mobile-first down to 360px.
 
-## Commands (once scaffolded)
+## Commands
 
 - `npm run dev` — local dev server
 - `npm run lint` / `npm run typecheck` / `npm run format`
-- `npm test` — Vitest
-- `npm run e2e` — Playwright smoke test
-- `npm run import:osm` — OSM Overpass import into drafts
-- `npx supabase db push` — apply migrations
-- `npm run db:types` — regenerate `lib/db/types.ts`
+- `npm run db:push` — apply migrations to the linked Supabase project (`npx supabase link` first)
+- `npm run db:types` — regenerate `lib/db/types.ts` from the linked project
+- `npm run db:test` — apply shim + migrations + seed to a local Postgres with PostGIS and run
+  `supabase/tests/*.test.sql` (needs `PGHOST`/`PGPORT`/`PGUSER`). The shim fakes Supabase's
+  `auth`/`storage`/roles; it is test-only.
+- `npm run db:types:local` — regenerate types from `$TEST_DATABASE_URL` (e.g. the test DB)
+- Later milestones: `npm test` (Vitest), `npm run e2e` (Playwright), `npm run import:osm`
+
+## Database notes
+
+- Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets).
+- Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
+  `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.
+  Use them through `lib/db/shops.ts`, never raw.
+- `shop_cards` view = flat card shape (lat/lng, city, cover photo); `security_invoker` so RLS applies.
+- Tier: `public.price_tier_for()` + trigger auto-fills `price_tier` when null; mirrors `lib/tier.ts`.
+- Roles live in `profiles.role`; only admins can change a role (trigger `profiles_guard_role`).
+  Make the first admin in the SQL editor: `update profiles set role = 'admin' where id = '<uuid>';`
+- Storage buckets: `shop-photos` (public), `submission-proofs` (private, uploads under `claims/` or `suggestions/`).
