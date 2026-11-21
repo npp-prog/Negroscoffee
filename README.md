@@ -22,3 +22,10 @@ Scripts: `npm run lint`, `npm run typecheck`, `npm run format`, `npm run build`.
    Google OAuth client ID/secret; authorized redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`).
 3. Sign in once at `/login`, then make yourself admin in the SQL editor:
    `update profiles set role = 'admin' where id = (select id from auth.users where email = 'you@example.com');`
+
+## Import real cafés from OpenStreetMap
+
+From GitHub (no computer needed): add repository secrets `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets and variables → Actions), then Actions →
+**Import from OpenStreetMap** → Run workflow. Places arrive in `/admin` as drafts; set type and
+latte price, then publish. Or locally: `npm run import:osm -- --dry-run`, then `npm run import:osm`.

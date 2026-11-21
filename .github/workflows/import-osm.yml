@@ -1,0 +1,71 @@
+# Import cafés and coffee shops on Negros from OpenStreetMap into Supabase as DRAFT shops.
+# Run it from GitHub: Actions → "Import from OpenStreetMap" → Run workflow.
+#
+# Needs two repository secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL               e.g. https://<project-ref>.supabase.co
+#   SUPABASE_SERVICE_ROLE_KEY  Supabase → Project Settings → API → service_role (keep secret)
+#
+# Safe to re-run: existing shops are matched by OSM id; only untouched drafts are refreshed,
+# shops you edited or published are never overwritten.
+name: Import from OpenStreetMap
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: show what would change, write nothing"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: import-osm
+  cancel-in-progress: false
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Check secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "::error::Add the SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY repository secrets first (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+
+      - name: Import
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          npm run -s import:osm -- --save overpass.json ${{ inputs.dry_run && '--dry-run' || '' }} | tee import-summary.txt
+          {
+            echo "## OpenStreetMap import ${{ inputs.dry_run && '(dry run)' || '' }}"
+            echo '```'
+            cat import-summary.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Keep the raw OSM data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: overpass-${{ github.run_id }}
+          path: overpass.json
+          if-no-files-found: ignore
+          retention-days: 14

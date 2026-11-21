@@ -42,20 +42,38 @@ function loadEnv() {
   }
 }
 
-async function fetchOverpass(): Promise<{ elements: OverpassElement[] }> {
-  const url = process.env.OVERPASS_URL ?? "https://overpass-api.de/api/interpreter";
-  console.log(`Querying ${url} …`);
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-      "user-agent": "kape-negros-osm-import/1.0",
-    },
-    body: new URLSearchParams({ data: overpassQuery() }),
-  });
-  if (!res.ok)
-    throw new Error(`Overpass returned ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  return res.json();
+const OVERPASS_ENDPOINTS = [
+  process.env.OVERPASS_URL,
+  "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+].filter((u): u is string => !!u);
+
+/** Query Overpass, trying each endpoint in turn (public servers are often busy). */
+async function fetchOverpass(): Promise<{ elements: OverpassElement[]; remark?: string }> {
+  let lastError = "";
+  for (const url of [...new Set(OVERPASS_ENDPOINTS)]) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      console.log(`Querying ${url} (attempt ${attempt}) …`);
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "content-type": "application/x-www-form-urlencoded",
+            "user-agent": "kape-negros-osm-import/1.0",
+          },
+          body: new URLSearchParams({ data: overpassQuery() }),
+          signal: AbortSignal.timeout(200_000),
+        });
+        if (res.ok) return res.json();
+        lastError = `${res.status} ${(await res.text()).slice(0, 200)}`;
+      } catch (err) {
+        lastError = err instanceof Error ? err.message : String(err);
+      }
+      console.warn(`  failed: ${lastError}`);
+      await new Promise((r) => setTimeout(r, 5_000 * attempt));
+    }
+  }
+  throw new Error(`All Overpass endpoints failed. Last error: ${lastError}`);
 }
 
 async function main() {
@@ -74,6 +92,12 @@ async function main() {
   const data = args.file ? JSON.parse(await readFile(args.file, "utf8")) : await fetchOverpass();
   if (args.save) await writeFile(args.save, JSON.stringify(data));
   const elements: OverpassElement[] = data.elements ?? [];
+  if (data.remark) console.warn(`Overpass remark: ${data.remark}`);
+  if (elements.length === 0) {
+    throw new Error(
+      "OpenStreetMap returned no places. The province boundary lookup may have failed; nothing was imported.",
+    );
+  }
 
   const cities = (await listCities(db)).map((c) => ({
     slug: c.slug,
