@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { PRICE_TIER_META, PROVINCE_LABEL, SHOP_TYPE_META } from "@/lib/categories";
 import { shopPhotoUrl, WEEKDAYS, type ShopDetail } from "@/lib/db";
 import { SUPABASE_URL } from "@/lib/env";
+import { siteUrl } from "@/lib/site";
 
 export async function generateStaticParams() {
   return getPrerenderSlugs();
@@ -61,7 +62,7 @@ export async function generateMetadata({ params }: PageProps<"/shop/[slug]">): P
 }
 
 /** schema.org CafeOrCoffeeShop for search engines. */
-function jsonLd(shop: ShopDetail, siteUrl: string) {
+function jsonLd(shop: ShopDetail, base: string) {
   const dayName: Record<string, string> = {
     mon: "Monday",
     tue: "Tuesday",
@@ -85,7 +86,7 @@ function jsonLd(shop: ShopDetail, siteUrl: string) {
     "@context": "https://schema.org",
     "@type": "CafeOrCoffeeShop",
     name: shop.name,
-    url: `${siteUrl}/shop/${shop.slug}`,
+    url: `${base}/shop/${shop.slug}`,
     description: describe(shop),
     priceRange: PRICE_TIER_META[shop.priceTier].symbol,
     servesCuisine: "Coffee",
@@ -119,7 +120,6 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
     src: shopPhotoUrl(SUPABASE_URL, p.storage_path, { width: 1200, height: 800 }),
     alt: p.caption ?? `${shop.name} photo ${i + 1}`,
   }));
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`;
   const tier = PRICE_TIER_META[shop.priceTier];
   const place = placeLine(shop);
@@ -143,7 +143,7 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
     <PageShell backHref={`/?shop=${shop.slug}`} wide>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: jsonLd(shop, siteUrl) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(shop, siteUrl()) }}
       />
 
       <article className="flex flex-col gap-8">

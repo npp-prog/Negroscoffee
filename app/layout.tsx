@@ -3,6 +3,7 @@ import { Fraunces, Inter } from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { Toaster } from "@/components/ui/sonner";
+import { siteUrl } from "@/lib/site";
 import "./globals.css";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
@@ -13,10 +14,10 @@ const fraunces = Fraunces({
   axes: ["SOFT", "opsz"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+const site = siteUrl();
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: new URL(site),
   title: { default: "Kape Negros — Coffee shops on Negros Island", template: "%s · Kape Negros" },
   description:
     "Find every coffee shop on Negros Island — Bacolod, Dumaguete and beyond — by price and style, on one beautiful map.",
