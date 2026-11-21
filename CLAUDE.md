@@ -107,7 +107,9 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 
 ## Database notes
 
-- Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets).
+- Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets → explicit
+  API grants). The grants file restores Supabase's standard table privileges for projects created
+  with "automatically expose new tables" off; RLS policies still decide row access.
 - Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
   `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.
   Use them through `lib/db/shops.ts`, never raw.
