@@ -76,3 +76,85 @@ export function openStateAt(
 export function isOpenAt(hours: WeeklyHours | null | undefined, at: Date = new Date()): boolean {
   return openStateAt(hours, at) === "open";
 }
+
+/** "7:00 AM", "12:30 PM"; "24:00" reads as "midnight". */
+export function formatTime(hhmm: string): string {
+  if (hhmm === "24:00" || hhmm === "00:00") return "midnight";
+  const [h, m] = hhmm.split(":").map(Number);
+  const suffix = h < 12 ? "AM" : "PM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, "0")} ${suffix}`;
+}
+
+export function formatRange(r: TimeRange): string {
+  if (r.open === "00:00" && r.close === "24:00") return "Open 24 hours";
+  return `${formatTime(r.open)} – ${formatTime(r.close)}`;
+}
+
+export const WEEKDAY_LABEL: Record<Weekday, string> = {
+  mon: "Monday",
+  tue: "Tuesday",
+  wed: "Wednesday",
+  thu: "Thursday",
+  fri: "Friday",
+  sat: "Saturday",
+  sun: "Sunday",
+};
+
+const SHORT_LABEL: Record<Weekday, string> = {
+  mon: "Mon",
+  tue: "Tue",
+  wed: "Wed",
+  thu: "Thu",
+  fri: "Fri",
+  sat: "Sat",
+  sun: "Sun",
+};
+
+export type OpenSummary = { state: OpenState; detail: string | null };
+
+/**
+ * Open state plus a short hint: "Closes 9:00 PM", "Opens 7:00 AM", "Opens Tue 7:00 AM".
+ * The hint is null when it can't be worked out from the recorded hours.
+ */
+export function openSummaryAt(
+  hours: WeeklyHours | null | undefined,
+  at: Date = new Date(),
+): OpenSummary {
+  const state = openStateAt(hours, at);
+  if (!hours || state === "unknown") return { state, detail: null };
+  const { day, minutes } = manilaClock(at);
+  const dayIdx = WEEKDAYS.indexOf(day);
+
+  if (state === "open") {
+    const yesterday = hours[previousDay(day)]?.find(
+      (r) => spansMidnight(r) && minutes < toMinutes(r.close),
+    );
+    const current =
+      yesterday ??
+      hours[day]?.find((r) => {
+        const end = spansMidnight(r) ? 24 * 60 : toMinutes(r.close);
+        return minutes >= toMinutes(r.open) && minutes < end;
+      });
+    if (!current) return { state, detail: null };
+    if (current.open === "00:00" && current.close === "24:00") {
+      return { state, detail: "Open 24 hours" };
+    }
+    return { state, detail: `Closes ${formatTime(current.close)}` };
+  }
+
+  // Closed: find the next opening within a week.
+  for (let offset = 0; offset < 7; offset++) {
+    const d = WEEKDAYS[(dayIdx + offset) % 7];
+    const ranges = hours[d];
+    if (!ranges) return { state, detail: null }; // unknown day ahead: don't guess
+    const next = ranges
+      .filter((r) => offset > 0 || toMinutes(r.open) > minutes)
+      .sort((a, b) => toMinutes(a.open) - toMinutes(b.open))[0];
+    if (next) {
+      const when = offset === 0 ? "" : offset === 1 ? "tomorrow " : `${SHORT_LABEL[d]} `;
+      return { state, detail: `Opens ${when}${formatTime(next.open)}` };
+    }
+  }
+  return { state, detail: null };
+}

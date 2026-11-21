@@ -32,6 +32,11 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   HTML markers clustered with `supercluster`. MapLibre's worker URL is set explicitly
   (`setWorkerUrl`) because bundling breaks its default lookup. Keep the attribution control visible.
 - Open-now logic lives in `lib/hours.ts` (Asia/Manila); the "Open now" filter runs client-side.
+- Shop page `/shop/[slug]`: data via `getPublicShop()` in `app/shop/[slug]/data.ts` (`"use cache"`,
+  `cacheLife("hours")`, tags `shop:<slug>` and `shops`). After admin edits call
+  `revalidateTag(shopTag(slug))`. Open status and today's hours render client-side so cached HTML
+  never goes stale. Unknown slugs stream the shop not-found page (200 + `noindex`; Next's
+  documented behavior with Cache Components, where `dynamicParams` is unavailable).
 - Time logic uses `Asia/Manila`.
 - Never hardcode keys; use `.env.local`, document in `.env.example`.
 - Google Places: store `google_place_id` only, no other Google data.

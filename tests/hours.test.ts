@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { WeeklyHours } from "@/lib/db/hours";
-import { manilaClock, openStateAt } from "@/lib/hours";
+import { formatTime, manilaClock, openStateAt, openSummaryAt } from "@/lib/hours";
 
 // 2026-11-23 is a Monday. Manila is UTC+8, so 01:00Z = 09:00 Manila.
 const manila = (isoLocal: string) => new Date(`${isoLocal}+08:00`);
@@ -46,5 +46,45 @@ describe("openStateAt", () => {
 
   it("treats 24:00 as end of day", () => {
     expect(openStateAt(hours, manila("2026-11-29T23:59:00"))).toBe("open");
+  });
+});
+
+describe("openSummaryAt", () => {
+  const week: WeeklyHours = {
+    mon: [{ open: "07:00", close: "21:00" }],
+    tue: [],
+    wed: [{ open: "08:30", close: "17:00" }],
+    thu: [{ open: "00:00", close: "24:00" }],
+  };
+
+  it("says when an open shop closes", () => {
+    expect(openSummaryAt(week, manila("2026-11-23T10:00:00"))).toEqual({
+      state: "open",
+      detail: "Closes 9:00 PM",
+    });
+  });
+
+  it("says when a closed shop opens next", () => {
+    expect(openSummaryAt(week, manila("2026-11-23T06:00:00")).detail).toBe("Opens 7:00 AM");
+    expect(openSummaryAt(week, manila("2026-11-23T22:00:00")).detail).toBe("Opens Wed 8:30 AM");
+    expect(openSummaryAt(week, manila("2026-11-24T12:00:00")).detail).toBe(
+      "Opens tomorrow 8:30 AM",
+    );
+  });
+
+  it("handles 24-hour days and unknown days", () => {
+    expect(openSummaryAt(week, manila("2026-11-26T03:00:00")).detail).toBe("Open 24 hours");
+    expect(openSummaryAt(week, manila("2026-11-27T10:00:00"))).toEqual({
+      state: "unknown",
+      detail: null,
+    });
+  });
+});
+
+describe("formatTime", () => {
+  it("formats 12-hour times", () => {
+    expect(formatTime("00:30")).toBe("12:30 AM");
+    expect(formatTime("12:00")).toBe("12:00 PM");
+    expect(formatTime("24:00")).toBe("midnight");
   });
 });
