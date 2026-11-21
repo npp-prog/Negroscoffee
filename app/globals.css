@@ -1,0 +1,164 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Kape Negros design tokens.
+ * Brand tokens (--oat, --espresso, --crema …) feed the shadcn/ui semantic tokens below,
+ * so components only ever use semantic names (bg-background, text-muted-foreground …).
+ */
+:root {
+  /* Surfaces & text */
+  --background: #f6f1ea; /* oat */
+  --surface: #ffffff;
+  --foreground: #2b1d14; /* espresso */
+  --muted-foreground: #7a6758; /* #8A7768 darkened slightly to pass AA on oat */
+  --border: #e7ded3;
+  --accent-brand: #c8893b; /* crema */
+  --accent-brand-foreground: #2b1d14;
+
+  /* Shop type colors (pins, chips) */
+  --type-specialty: #5a3a22;
+  --type-chain: #c2613f;
+  --type-kapihan: #6e8b6a;
+  --pin-foreground: #ffffff;
+
+  /* Glass bar over the map */
+  --glass: rgb(255 255 255 / 0.72);
+  --glass-border: rgb(255 255 255 / 0.6);
+
+  /* shadcn/ui semantic tokens */
+  --card: var(--surface);
+  --card-foreground: var(--foreground);
+  --popover: var(--surface);
+  --popover-foreground: var(--foreground);
+  --primary: var(--foreground);
+  --primary-foreground: #f6f1ea;
+  --secondary: #efe7dc;
+  --secondary-foreground: var(--foreground);
+  --muted: #efe7dc;
+  --accent: #efe7dc;
+  --accent-foreground: var(--foreground);
+  --destructive: #b3261e;
+  --input: var(--border);
+  --ring: var(--accent-brand);
+  --radius: 1rem;
+
+  --shadow-soft:
+    0 1px 2px rgb(43 29 20 / 0.06), 0 4px 12px rgb(43 29 20 / 0.06),
+    0 16px 32px -12px rgb(43 29 20 / 0.12);
+  --shadow-float: 0 2px 4px rgb(43 29 20 / 0.06), 0 12px 32px -8px rgb(43 29 20 / 0.18);
+}
+
+.dark {
+  --background: #15100c; /* roast */
+  --surface: #211913;
+  --foreground: #f3eae0;
+  --muted-foreground: #a8968a;
+  --border: #33271f;
+  --accent-brand: #e0a458;
+  --accent-brand-foreground: #15100c;
+
+  --type-specialty: #9a6a46;
+  --type-chain: #d9775a;
+  --type-kapihan: #86a681;
+  --pin-foreground: #15100c;
+
+  --glass: rgb(33 25 19 / 0.72);
+  --glass-border: rgb(255 255 255 / 0.06);
+
+  --primary: var(--accent-brand);
+  --primary-foreground: #15100c;
+  --secondary: #2a2019;
+  --muted: #2a2019;
+  --accent: #2a2019;
+  --destructive: #f2b8b5;
+
+  --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.3);
+  --shadow-float: 0 2px 6px rgb(0 0 0 / 0.35), 0 16px 40px -8px rgb(0 0 0 / 0.5);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-crema: var(--accent-brand);
+  --color-crema-foreground: var(--accent-brand-foreground);
+  --color-type-specialty: var(--type-specialty);
+  --color-type-chain: var(--type-chain);
+  --color-type-kapihan: var(--type-kapihan);
+  --color-pin-foreground: var(--pin-foreground);
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
+
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --shadow-soft: var(--shadow-soft);
+  --shadow-float: var(--shadow-float);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/60;
+  }
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background font-sans text-foreground antialiased;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display tracking-tight;
+    font-optical-sizing: auto;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility glass {
+  background-color: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
