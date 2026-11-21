@@ -53,6 +53,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
+          set -o pipefail
           npm run -s import:osm -- --save overpass.json ${{ inputs.dry_run && '--dry-run' || '' }} | tee import-summary.txt
           {
             echo "## OpenStreetMap import ${{ inputs.dry_run && '(dry run)' || '' }}"

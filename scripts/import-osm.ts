@@ -45,8 +45,17 @@ function loadEnv() {
 const OVERPASS_ENDPOINTS = [
   process.env.OVERPASS_URL,
   "https://overpass-api.de/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
 ].filter((u): u is string => !!u);
+
+/** "fetch failed" hides the real reason (DNS, refused, TLS…) in err.cause. */
+function describe(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  const cause = (err as Error & { cause?: { code?: string; message?: string } }).cause;
+  return cause ? `${err.message} (${cause.code ?? ""} ${cause.message ?? ""})`.trim() : err.message;
+}
 
 /** Query Overpass, trying each endpoint in turn (public servers are often busy). */
 async function fetchOverpass(): Promise<{ elements: OverpassElement[]; remark?: string }> {
@@ -62,14 +71,18 @@ async function fetchOverpass(): Promise<{ elements: OverpassElement[]; remark?: 
             "user-agent": "kape-negros-osm-import/1.0",
           },
           body: new URLSearchParams({ data: overpassQuery() }),
-          signal: AbortSignal.timeout(200_000),
+          signal: AbortSignal.timeout(150_000),
         });
         if (res.ok) return res.json();
-        lastError = `${res.status} ${(await res.text()).slice(0, 200)}`;
+        lastError = `HTTP ${res.status} ${(await res.text()).slice(0, 200)}`;
+        console.warn(`  failed: ${lastError}`);
+        // Only "busy" responses are worth a second try on the same server.
+        if (![429, 502, 503, 504].includes(res.status)) break;
       } catch (err) {
-        lastError = err instanceof Error ? err.message : String(err);
+        lastError = describe(err);
+        console.warn(`  failed: ${lastError}`);
+        if (/timeout|aborted/i.test(lastError)) break; // slow server: move on
       }
-      console.warn(`  failed: ${lastError}`);
       await new Promise((r) => setTimeout(r, 5_000 * attempt));
     }
   }

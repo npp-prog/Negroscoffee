@@ -105,7 +105,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   logic is pure in `lib/osm.ts` (tested); writes in `lib/db/osm-import.ts`.
   Also runnable from GitHub: Actions → "Import from OpenStreetMap" (`.github/workflows/import-osm.yml`,
   manual trigger, optional dry run; needs repo secrets `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`).
-  The script retries two Overpass endpoints and fails if OSM returns no places.
+  The script tries several Overpass endpoints (logging the real network error) and fails if OSM returns no places; the workflow uses `set -o pipefail` so a failed import shows red.
 - Later milestones: `npm run e2e` (Playwright)
 
 ## Database notes

@@ -50,7 +50,7 @@ export function overpassQuery(timeoutSec = 180): string {
 (
   nwr["amenity"="cafe"](area.negros);
   nwr["shop"="coffee"](area.negros);
-  nwr["cuisine"~"(^|;)coffee_shop(;|$)"](area.negros);
+  nwr["cuisine"="coffee_shop"](area.negros);
 );
 out center tags;`;
 }
