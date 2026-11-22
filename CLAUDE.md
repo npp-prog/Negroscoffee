@@ -87,6 +87,13 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   `auth.admin.getUserById`). Actions schedule sends with `after()` from `next/server`: new review
   (created, not edited) → shop owner; suggestion/correction/claim → admins (`NOTIFY_ADMIN_EMAILS`
   or admins with emails on); claim approve/reject → claimant (always). Toggle on `/saved`.
+- Visitor photos (migration `20261122000005`): signed-in visitors upload via `AddPhoto` on the
+  shop page (`addPhotoAction`) into private bucket `photo-submissions` (`<user_id>/…`) + a
+  `photo_submissions` row (pending; RLS: own folder, published shops, 20/day trigger). Admins
+  review at `/admin/photos`: approve copies the file into `shop-photos/<shop_id>/…` and inserts
+  `shop_photos` with `credit` (display name) + `contributed_by`, then deletes the private file;
+  reject deletes the file and keeps the row. Admin's own client throughout, no service role.
+  Visitors see status and withdraw pending photos on `/saved`. Data access: `lib/db/photos.ts`.
 - `/admin/review`: one-card-at-a-time draft review (type, latte price or tier, Publish / "Not a
   coffee shop" (hidden) / Skip), ordered by province → town → name. `quickReviewShop()` refuses to
   publish without type, tier/price and province.
@@ -152,7 +159,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 ## Database notes
 
 - Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets → explicit
-  API grants → owner editing → reviews & saved shops → published_at → email prefs). The grants file restores Supabase's standard table privileges for projects created
+  API grants → owner editing → reviews & saved shops → published_at → email prefs → visitor photos). The grants file restores Supabase's standard table privileges for projects created
   with "automatically expose new tables" off; RLS policies still decide row access.
 - Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
   `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.
@@ -161,4 +168,5 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 - Tier: `public.price_tier_for()` + trigger auto-fills `price_tier` when null; mirrors `lib/tier.ts`.
 - Roles live in `profiles.role`; only admins can change a role (trigger `profiles_guard_role`).
   Make the first admin in the SQL editor: `update profiles set role = 'admin' where id = '<uuid>';`
-- Storage buckets: `shop-photos` (public), `submission-proofs` (private, uploads under `claims/` or `suggestions/`).
+- Storage buckets: `shop-photos` (public), `submission-proofs` (private, uploads under `claims/` or `suggestions/`),
+  `photo-submissions` (private, visitor photos awaiting review under `<user_id>/`).

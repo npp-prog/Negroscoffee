@@ -2,19 +2,27 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Check, Heart, LogOut } from "lucide-react";
+import { Camera, Check, Heart, LogOut } from "lucide-react";
 
 import { signOutAction } from "@/app/login/actions";
 import { PageShell } from "@/components/layout/page-shell";
 import { DisplayNameForm } from "@/components/saved/display-name-form";
 import { EmailPrefs } from "@/components/saved/email-prefs";
+import { MyPhotos } from "@/components/saved/my-photos";
 import { RatingBadge } from "@/components/shop/stars";
 import { TierBadge } from "@/components/shop/tier-badge";
 import { TypeChip } from "@/components/shop/type-chip";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getViewer } from "@/lib/admin-server";
-import { getProfileRole, getShopCardsByIds, listSavedShopIds, type ShopCard } from "@/lib/db";
+import {
+  getProfileRole,
+  getShopCardsByIds,
+  listMyPhotos,
+  listSavedShopIds,
+  type MyPhoto,
+  type ShopCard,
+} from "@/lib/db";
 import { hasSupabaseEnv } from "@/lib/env";
 
 export const metadata: Metadata = { title: "Saved", robots: { index: false } };
@@ -48,9 +56,13 @@ async function SavedContent() {
     return <p className="text-muted-foreground">Supabase isn&apos;t configured.</p>;
   const { db, user, role } = await getViewer();
   if (!user) redirect("/login?next=/saved");
-  const [ids, profile] = await Promise.all([
+  const [ids, profile, photos] = await Promise.all([
     listSavedShopIds(db, user.id),
     getProfileRole(db, user.id),
+    listMyPhotos(db, user.id).catch((err) => {
+      console.error("[saved] photos", err);
+      return [] as MyPhoto[];
+    }),
   ]);
   const [favorites, visited] = await Promise.all([
     getShopCardsByIds(db, ids.favorite),
@@ -100,6 +112,14 @@ async function SavedContent() {
         </h2>
         <ShopList shops={visited} empty="Mark shops with “Been here” to track your coffee trail." />
       </section>
+      {photos.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <Camera className="size-5 text-crema" aria-hidden="true" /> Your photos
+          </h2>
+          <MyPhotos photos={photos} />
+        </section>
+      )}
       <section className="rounded-[20px] border bg-surface p-5 shadow-soft">
         <DisplayNameForm initial={profile?.display_name ?? ""} />
         <hr className="my-5 border-border" />

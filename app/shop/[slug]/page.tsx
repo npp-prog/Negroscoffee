@@ -16,6 +16,7 @@ import {
 import { getPrerenderSlugs, getPublicShop } from "./data";
 import { CupIllustration } from "@/components/brand/cup-illustration";
 import { PageShell } from "@/components/layout/page-shell";
+import { AddPhoto } from "@/components/shop/add-photo";
 import { HoursTable } from "@/components/shop/hours-table";
 import { LiveOpenStatus } from "@/components/shop/live-open-status";
 import { MenuPrices } from "@/components/shop/menu-prices";
@@ -134,6 +135,7 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
     id: p.id,
     src: shopPhotoUrl(SUPABASE_URL, p.storage_path, { width: 1200, height: 800 }),
     alt: p.caption ?? `${shop.name} photo ${i + 1}`,
+    credit: p.credit,
   }));
   const directions = `https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`;
   const tier = PRICE_TIER_META[shop.priceTier];
@@ -315,8 +317,9 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
             )}
 
             <section className="flex flex-col gap-2 rounded-[20px] border border-dashed p-5">
-              <h2 className="text-sm font-semibold">Something off?</h2>
+              <h2 className="text-sm font-semibold">Help keep this page fresh</h2>
               <div className="flex flex-wrap gap-2">
+                <AddPhoto slug={shop.slug} shopName={shop.name} />
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/suggest?shop=${shop.slug}`}>
                     <Pencil /> Suggest an edit

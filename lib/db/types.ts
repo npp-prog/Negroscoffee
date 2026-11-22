@@ -74,6 +74,61 @@ export type Database = {
           },
         ];
       };
+      photo_submissions: {
+        Row: {
+          caption: string | null;
+          created_at: string;
+          id: string;
+          photo_id: string | null;
+          reviewed_at: string | null;
+          reviewed_by: string | null;
+          shop_id: string;
+          status: string;
+          storage_path: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          caption?: string | null;
+          created_at?: string;
+          id?: string;
+          photo_id?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          shop_id: string;
+          status?: string;
+          storage_path: string;
+          user_id?: string;
+        };
+        Update: {
+          caption?: string | null;
+          created_at?: string;
+          id?: string;
+          photo_id?: string | null;
+          reviewed_at?: string | null;
+          reviewed_by?: string | null;
+          shop_id?: string;
+          status?: string;
+          storage_path?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "photo_submissions_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "photo_submissions_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           created_at: string;
@@ -247,6 +302,8 @@ export type Database = {
       shop_photos: {
         Row: {
           caption: string | null;
+          contributed_by: string | null;
+          credit: string | null;
           created_at: string;
           id: string;
           shop_id: string;
@@ -256,6 +313,8 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           caption?: string | null;
+          contributed_by?: string | null;
+          credit?: string | null;
           created_at?: string;
           id?: string;
           shop_id: string;
@@ -264,6 +323,8 @@ export type Database = {
         };
         Update: {
           caption?: string | null;
+          contributed_by?: string | null;
+          credit?: string | null;
           created_at?: string;
           id?: string;
           shop_id?: string;

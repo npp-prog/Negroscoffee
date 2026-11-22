@@ -69,12 +69,13 @@ export function newReviewEmail(p: {
   return { subject, html, text };
 }
 
-export type SubmissionKindLabel = "new_shop" | "claim" | "correction";
+export type SubmissionKindLabel = "new_shop" | "claim" | "correction" | "photo";
 
 const KIND_LABEL: Record<SubmissionKindLabel, string> = {
   new_shop: "New shop suggestion",
   claim: "Ownership claim",
   correction: "Edit suggestion",
+  photo: "New visitor photo",
 };
 
 export function newSubmissionEmail(p: {

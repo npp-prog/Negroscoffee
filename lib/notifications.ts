@@ -119,7 +119,8 @@ export async function notifyNewSubmission(p: {
         kind: p.kind,
         title: title || "Untitled",
         from: p.from,
-        reviewUrl: `${base}/admin/submissions?kind=${p.kind}`,
+        reviewUrl:
+          p.kind === "photo" ? `${base}/admin/photos` : `${base}/admin/submissions?kind=${p.kind}`,
         settingsUrl: `${base}/saved`,
       }),
     });

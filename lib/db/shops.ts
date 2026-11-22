@@ -165,7 +165,7 @@ export type ShopDetail = ShopCard & {
   source: ShopRow["source"];
   /** OpenStreetMap id ("node/123") for imported shops. */
   osmId: string | null;
-  photos: Pick<ShopPhotoRow, "id" | "storage_path" | "caption">[];
+  photos: Pick<ShopPhotoRow, "id" | "storage_path" | "caption" | "credit">[];
   menu: Pick<MenuItemRow, "id" | "name" | "price" | "category">[];
   /** Visible reviews, newest first (up to 30). */
   reviews: Review[];
@@ -184,7 +184,7 @@ export async function getShopBySlug(db: Db, slug: string): Promise<ShopDetail | 
       .single(),
     db
       .from("shop_photos")
-      .select("id, storage_path, caption")
+      .select("id, storage_path, caption, credit")
       .eq("shop_id", base.id)
       .order("sort_order"),
     db

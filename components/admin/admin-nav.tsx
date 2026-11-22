@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/admin/shops", label: "Shops" },
   { href: "/admin/submissions", label: "Submissions" },
   { href: "/admin/reviews", label: "Reviews" },
+  { href: "/admin/photos", label: "Photos" },
 ];
 
 export function AdminNav(props: { static?: boolean }) {

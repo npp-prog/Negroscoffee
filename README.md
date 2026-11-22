@@ -55,6 +55,7 @@ Environment variables (see [`.env.example`](./.env.example)):
    6. `20261122000002_reviews_favorites.sql` — reviews, ratings, favorites and "visited"
    7. `20261122000003_published_at.sql` — publish dates for the "New" filter and badges
    8. `20261122000004_email_notifications.sql` — per-person email on/off setting
+   9. `20261122000005_visitor_photos.sql` — visitor photo uploads (private until approved)
 3. Run [`supabase/seed.sql`](./supabase/seed.sql): 57 Negros cities/municipalities plus 10
    fictional demo shops (slugs `demo-*`). Remove the demos before launch:
 
@@ -103,10 +104,17 @@ Signed-in visitors rate shops (1–5 stars, optional text, one review per shop) 
 reviews). Averages appear on shop pages and map cards. Owners reply from **My shop**; admins
 hide abusive reviews at `/admin/reviews` (hidden reviews don't count toward ratings).
 
+### Visitor photos
+
+Signed-in visitors tap **Add a photo** on a shop page. Photos wait privately until you approve
+them at `/admin/photos`; approved ones join the end of the shop's gallery with "Photo by" and the
+visitor's display name (declined files are deleted). Visitors follow their photos on `/saved`
+and can withdraw pending ones. Limit: 20 photos per person per day.
+
 ### Email notifications (optional)
 
 - Owners get an email when someone reviews their shop.
-- Admins get one for each new suggestion, edit or claim.
+- Admins get one for each new suggestion, edit, claim or visitor photo.
 - Claimants hear when their claim is approved or declined.
 
 Everyone can switch emails off on `/saved` (claim decisions are always sent).

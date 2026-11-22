@@ -1,7 +1,7 @@
 "use server";
 
 import { getViewer } from "@/lib/admin-server";
-import { updateMyDisplayName, updateMyNotifyEmail } from "@/lib/db";
+import { deleteMyPendingPhoto, updateMyDisplayName, updateMyNotifyEmail } from "@/lib/db";
 
 export async function updateDisplayNameAction(
   name: string,
@@ -31,5 +31,19 @@ export async function updateNotifyEmailAction(
   } catch (err) {
     console.error("[saved] notify email", err);
     return { ok: false, error: "Couldn't save. Try again." };
+  }
+}
+
+export async function withdrawPhotoAction(id: string): Promise<{ ok: boolean; error?: string }> {
+  if (typeof id !== "string" || !/^[0-9a-f-]{36}$/.test(id))
+    return { ok: false, error: "Bad request" };
+  try {
+    const { db, user } = await getViewer();
+    if (!user) return { ok: false, error: "Not signed in." };
+    await deleteMyPendingPhoto(db, id);
+    return { ok: true };
+  } catch (err) {
+    console.error("[saved] withdraw photo", err);
+    return { ok: false, error: "Couldn't withdraw. Try again." };
   }
 }

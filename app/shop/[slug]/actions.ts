@@ -3,8 +3,15 @@
 import { after } from "next/server";
 
 import { expireShops, getViewer } from "@/lib/admin-server";
-import { deleteMyReview, getShopCardBySlug, replyToReview, saveMyReview } from "@/lib/db";
-import { notifyNewReview } from "@/lib/notifications";
+import {
+  deleteMyReview,
+  getShopCardBySlug,
+  replyToReview,
+  saveMyReview,
+  submitVisitorPhoto,
+} from "@/lib/db";
+import { notifyNewReview, notifyNewSubmission } from "@/lib/notifications";
+import { checkImage } from "@/lib/validation";
 
 export type ReviewResult = { ok: true } | { ok: false; error: string };
 
@@ -83,5 +90,37 @@ export async function replyToReviewAction(
   } catch (err) {
     console.error("[reviews] reply", err);
     return { ok: false, error: "Only this shop's owner can reply." };
+  }
+}
+
+export type PhotoResult =
+  { status: "idle" } | { status: "success" } | { status: "error"; error: string };
+
+/** A signed-in visitor sends a photo of a published shop; it waits for admin approval. */
+export async function addPhotoAction(_prev: PhotoResult, form: FormData): Promise<PhotoResult> {
+  try {
+    const slug = String(form.get("slug") ?? "");
+    const raw = form.get("photo");
+    const file = raw instanceof File && raw.size > 0 ? raw : null;
+    const problem = checkImage(file, true);
+    if (problem || !file) return { status: "error", error: problem ?? "Add a photo" };
+    const caption =
+      String(form.get("caption") ?? "")
+        .trim()
+        .replace(/\s+/g, " ")
+        .slice(0, 200) || null;
+    const ctx = await shopFor(slug);
+    if (!ctx?.user) return { status: "error", error: "Sign in to add photos." };
+    if (!ctx.shop) return { status: "error", error: "This shop isn't available." };
+    await submitVisitorPhoto(ctx.db, { shopId: ctx.shop.id, userId: ctx.user.id, file, caption });
+    const from = ctx.user.email ?? null;
+    after(() => notifyNewSubmission({ kind: "photo", shopSlug: slug, from }));
+    return { status: "success" };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (msg.includes("photo_limit"))
+      return { status: "error", error: "That's 20 photos today. Thanks! Try again tomorrow." };
+    console.error("[photos] add", err);
+    return { status: "error", error: "Couldn't upload the photo. Try again." };
   }
 }

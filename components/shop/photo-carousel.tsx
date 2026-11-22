@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-export type CarouselPhoto = { id: string; src: string; alt: string };
+export type CarouselPhoto = { id: string; src: string; alt: string; credit?: string | null };
 
 /** Swipeable photo strip (CSS scroll-snap) with arrow buttons on larger screens. */
 export function PhotoCarousel({
@@ -42,7 +42,7 @@ export function PhotoCarousel({
         {photos.map((p, i) => (
           <figure
             key={p.id}
-            className="aspect-[4/3] w-full shrink-0 snap-center sm:aspect-[16/9]"
+            className="relative aspect-[4/3] w-full shrink-0 snap-center sm:aspect-[16/9]"
             aria-roledescription="slide"
             aria-label={`${i + 1} of ${photos.length}`}
           >
@@ -55,6 +55,11 @@ export function PhotoCarousel({
               fetchPriority={i === 0 ? "high" : "auto"}
               className="size-full bg-muted object-cover"
             />
+            {p.credit && (
+              <figcaption className="absolute top-3 left-3 max-w-[70%] truncate rounded-full bg-black/55 px-2.5 py-1 text-[12px] text-white backdrop-blur-sm">
+                Photo by {p.credit}
+              </figcaption>
+            )}
           </figure>
         ))}
       </div>

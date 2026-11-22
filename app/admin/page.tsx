@@ -4,7 +4,13 @@ import { ArrowRight, Download, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { describeShopEdit, getAdminCounts, listRecentShopEdits, listSubmissions } from "@/lib/db";
+import {
+  countPendingPhotos,
+  describeShopEdit,
+  getAdminCounts,
+  listRecentShopEdits,
+  listSubmissions,
+} from "@/lib/db";
 import { SHOP_TYPE_META, SHOP_TYPES } from "@/lib/categories";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -37,10 +43,11 @@ function Stat({
 
 export default async function AdminDashboard() {
   const db = await getServerSupabase();
-  const [counts, pending, edits] = await Promise.all([
+  const [counts, pending, edits, photoCount] = await Promise.all([
     getAdminCounts(db),
     listSubmissions(db, { status: "pending", limit: 6 }),
     listRecentShopEdits(db, 8).catch(() => []),
+    countPendingPhotos(db).catch(() => 0),
   ]);
   const pendingTotal = counts.pending.new_shop + counts.pending.claim + counts.pending.correction;
   const published = counts.shops.published || 1;
@@ -116,7 +123,7 @@ export default async function AdminDashboard() {
             Open queue <ArrowRight className="size-4" aria-hidden="true" />
           </Link>
         </div>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {(Object.keys(KIND_LABEL) as (keyof typeof KIND_LABEL)[]).map((k) => (
             <Stat
               key={k}
@@ -126,6 +133,7 @@ export default async function AdminDashboard() {
               accent
             />
           ))}
+          <Stat label="Visitor photos" value={photoCount} href="/admin/photos" accent />
         </div>
         {pending.length > 0 && (
           <ul className="divide-y rounded-[20px] border bg-surface shadow-soft">
