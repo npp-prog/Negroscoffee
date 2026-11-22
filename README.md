@@ -58,6 +58,7 @@ Environment variables (see [`.env.example`](./.env.example)):
    8. `20261122000004_email_notifications.sql` — per-person email on/off setting
    9. `20261122000005_visitor_photos.sql` — visitor photo uploads (private until approved)
    10. `20261122000006_shop_insights.sql` — anonymous daily visit counters for owner insights
+   11. `20261122000007_shop_lists.sql` — curated coffee lists
 3. Run [`supabase/seed.sql`](./supabase/seed.sql): 57 Negros cities/municipalities plus 10
    fictional demo shops (slugs `demo-*`). Remove the demos before launch:
 
@@ -98,6 +99,13 @@ menu, description, contact links and photos; changes go live immediately and app
 **Recent owner edits** on your dashboard. Name, type, address, map pin and status stay with
 admins. If a claim was approved before the owner signed in, ask them to sign in once, then use
 the **Owner** panel in the shop editor to link their email.
+
+### Coffee lists
+
+Make hand-picked lists ("Best kapihan in Bacolod", "Dumaguete under ₱100") at `/admin/lists`:
+add published shops by name, order them, add a short note to each, then set the list to
+Published. Lists appear at `/lists` (also linked from the map), each with its own shareable page
+and preview image, and listed shops show "Featured in" on their page.
 
 ### Owner insights
 

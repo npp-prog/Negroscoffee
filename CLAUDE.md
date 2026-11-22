@@ -104,6 +104,14 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   helpers in `lib/insights.ts` (tested); data in `lib/db/insights.ts`. UI: `InsightsCard` on
   `/owner/shops/[id]` (published shops), "Most viewed · last 7 days" on `/admin`. Chart bar color
   token `--chart-bar` (validated with the dataviz palette checker).
+- Coffee lists (migration `20261122000007`): `shop_lists` (slug, title, description, status
+  draft/published, sort_order, published_at by trigger) + `shop_list_items` (position, note).
+  Public read of published lists/items (RLS), admins write with their own client. Data:
+  `lib/db/lists.ts`. Public: `/lists`, `/lists/[slug]` (cached in `app/lists/data.ts`, tags
+  `lists`, `list:<slug>` via `listTag()` in `lib/lists.ts`, plus `shops`; ItemList JSON-LD; OG
+  image), "Featured in" chips on shop pages (`getPublicShop` also tags `lists`). Admin:
+  `/admin/lists` + editor (`components/admin/list-editor.tsx`); actions call `expireLists()`.
+  Publishing an empty list is refused; empty lists are hidden from `/lists`.
 - `/admin/review`: one-card-at-a-time draft review (type, latte price or tier, Publish / "Not a
   coffee shop" (hidden) / Skip), ordered by province → town → name. `quickReviewShop()` refuses to
   publish without type, tier/price and province.
@@ -177,7 +185,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 ## Database notes
 
 - Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets → explicit
-  API grants → owner editing → reviews & saved shops → published_at → email prefs → visitor photos → shop insights). The grants file restores Supabase's standard table privileges for projects created
+  API grants → owner editing → reviews & saved shops → published_at → email prefs → visitor photos → shop insights → coffee lists). The grants file restores Supabase's standard table privileges for projects created
   with "automatically expose new tables" off; RLS policies still decide row access.
 - Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
   `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.

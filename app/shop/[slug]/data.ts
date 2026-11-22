@@ -2,7 +2,7 @@ import "server-only";
 
 import { cacheLife, cacheTag } from "next/cache";
 
-import { getShopBySlug, listPublishedSlugs, type ShopDetail } from "@/lib/db";
+import { getShopBySlug, listPublishedSlugs, listsForShop, type ShopDetail } from "@/lib/db";
 import { hasSupabaseEnv } from "@/lib/env";
 import { getPublicSupabase } from "@/lib/supabase/server";
 
@@ -13,12 +13,18 @@ const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const PLACEHOLDER = "kape-negros-placeholder";
 
 /** A published shop with photos and menu, as a logged-out visitor sees it. */
-export async function getPublicShop(slug: string): Promise<ShopDetail | null> {
+export type PublicShop = ShopDetail & { lists: { slug: string; title: string }[] };
+
+export async function getPublicShop(slug: string): Promise<PublicShop | null> {
   "use cache";
   cacheLife("hours");
-  cacheTag(shopTag(slug), "shops");
+  cacheTag(shopTag(slug), "shops", "lists");
   if (!hasSupabaseEnv() || !SLUG.test(slug) || slug === PLACEHOLDER) return null;
-  return getShopBySlug(getPublicSupabase(), slug);
+  const db = getPublicSupabase();
+  const shop = await getShopBySlug(db, slug);
+  if (!shop) return null;
+  const lists = await listsForShop(db, shop.id).catch(() => []);
+  return { ...shop, lists };
 }
 
 /** Slugs to prerender. Falls back to a placeholder (renders 404) when the DB is unreachable. */

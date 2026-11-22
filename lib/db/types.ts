@@ -335,6 +335,80 @@ export type Database = {
           },
         ];
       };
+      shop_list_items: {
+        Row: {
+          list_id: string;
+          note: string | null;
+          position: number;
+          shop_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          list_id: string;
+          note?: string | null;
+          position?: number;
+          shop_id: string;
+        };
+        Update: {
+          list_id?: string;
+          note?: string | null;
+          position?: number;
+          shop_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shop_list_items_list_id_fkey";
+            columns: ["list_id"];
+            isOneToOne: false;
+            referencedRelation: "shop_lists";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shop_list_items_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      shop_lists: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          published_at: string | null;
+          slug: string;
+          sort_order: number;
+          status: string;
+          title: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          published_at?: string | null;
+          slug: string;
+          sort_order?: number;
+          status?: string;
+          title: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          published_at?: string | null;
+          slug?: string;
+          sort_order?: number;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       shop_photos: {
         Row: {
           caption: string | null;

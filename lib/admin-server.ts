@@ -4,6 +4,7 @@ import { updateTag } from "next/cache";
 
 import { shopTag } from "@/app/shop/[slug]/data";
 import { getProfileRole, ownsShop, type Db } from "@/lib/db";
+import { listTag } from "@/lib/lists";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export type AdminContext = { db: Db; userId: string; email: string | null };
@@ -34,6 +35,12 @@ export async function requireAdmin(): Promise<AdminContext> {
 }
 
 /** Expire cached public pages for these shops and the slug list (call from Server Actions). */
+/** Refresh public list pages (and shop pages, which show "Featured in"). */
+export function expireLists(slugs: string[]) {
+  updateTag("lists");
+  for (const slug of new Set(slugs)) updateTag(listTag(slug));
+}
+
 export function expireShops(slugs: string[]) {
   updateTag("shops");
   for (const slug of new Set(slugs)) updateTag(shopTag(slug));

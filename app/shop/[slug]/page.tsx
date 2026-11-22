@@ -6,6 +6,7 @@ import {
   Coffee,
   ExternalLink,
   Globe,
+  ListOrdered,
   MapPin,
   Navigation,
   Pencil,
@@ -246,6 +247,22 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
                 text={`${shop.name}${shop.cityName ? ` in ${shop.cityName}` : ""} on Kape Negros`}
               />
             </div>
+
+            {shop.lists.length > 0 && (
+              <section aria-label="Featured in" className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground">Featured in</span>
+                {shop.lists.map((l) => (
+                  <Link
+                    key={l.slug}
+                    href={`/lists/${l.slug}`}
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border bg-surface px-3 text-sm font-medium hover:border-crema"
+                  >
+                    <ListOrdered className="size-4 text-crema" aria-hidden="true" />
+                    {l.title}
+                  </Link>
+                ))}
+              </section>
+            )}
 
             {shop.description && (
               <section className="flex flex-col gap-2">

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Heart, Info, MapPinOff, Plus, X } from "lucide-react";
+import { Heart, Info, ListOrdered, MapPinOff, Plus, X } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import type { MapRef } from "react-map-gl/maplibre";
 
@@ -335,6 +335,11 @@ export function ExploreShell() {
                 <Heart />
               </Link>
             </Button>
+            <Button asChild variant="ghost" size="icon" aria-label="Coffee lists">
+              <Link href="/lists">
+                <ListOrdered />
+              </Link>
+            </Button>
             <Button asChild variant="ghost" size="icon" aria-label="About Kape Negros">
               <Link href="/about">
                 <Info />
@@ -439,6 +444,12 @@ export function ExploreShell() {
                       className="inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground hover:text-foreground"
                     >
                       <Heart className="size-3.5" aria-hidden="true" /> Saved
+                    </Link>
+                    <Link
+                      href="/lists"
+                      className="inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      <ListOrdered className="size-3.5" aria-hidden="true" /> Lists
                     </Link>
                     <Link
                       href="/about"
