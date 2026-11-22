@@ -11,6 +11,8 @@ import { getServerSupabase } from "@/lib/supabase/server";
 import {
   countPendingPhotos,
   listDemoShopSlugs,
+  listTopShops,
+  type TopShop,
   describeShopEdit,
   getAdminCounts,
   listRecentShopEdits,
@@ -48,12 +50,13 @@ function Stat({
 
 export default async function AdminDashboard() {
   const db = await getServerSupabase();
-  const [counts, pending, edits, photoCount, demoSlugs] = await Promise.all([
+  const [counts, pending, edits, photoCount, demoSlugs, topShops] = await Promise.all([
     getAdminCounts(db),
     listSubmissions(db, { status: "pending", limit: 6 }),
     listRecentShopEdits(db, 8).catch(() => []),
     countPendingPhotos(db).catch(() => 0),
     listDemoShopSlugs(db).catch(() => [] as string[]),
+    listTopShops(db, 7, 5).catch(() => [] as TopShop[]),
   ]);
   const launch = launchChecklist({
     demoShops: demoSlugs.length,
@@ -227,6 +230,32 @@ export default async function AdminDashboard() {
         <code className="rounded bg-muted px-1.5 py-0.5">npm run import:osm</code>; they arrive as
         drafts here.
       </p>
+      <section aria-labelledby="top-h" className="flex flex-col gap-3">
+        <h2 id="top-h" className="text-lg font-semibold">
+          Most viewed · last 7 days
+        </h2>
+        {topShops.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No visits counted yet.</p>
+        ) : (
+          <ol className="flex flex-col divide-y rounded-[20px] border bg-surface shadow-soft">
+            {topShops.map((t, i) => (
+              <li key={t.shopId}>
+                <Link
+                  href={`/owner/shops/${t.shopId}`}
+                  className="flex min-h-12 items-center gap-3 px-4 py-2 text-sm hover:bg-accent"
+                >
+                  <span className="w-5 text-muted-foreground tabular">{i + 1}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium">{t.name}</span>
+                  <span className="text-muted-foreground tabular">
+                    {t.views} views · {t.directions} directions
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ol>
+        )}
+      </section>
+
       {launchReady && <LaunchChecklist items={launch} />}
     </div>
   );

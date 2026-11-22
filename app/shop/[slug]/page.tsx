@@ -24,6 +24,7 @@ import { PhotoCarousel } from "@/components/shop/photo-carousel";
 import { ReviewsSection } from "@/components/shop/reviews-section";
 import { SaveButtons } from "@/components/shop/save-buttons";
 import { ShareButton } from "@/components/shop/share-button";
+import { ShopTracker } from "@/components/shop/shop-tracker";
 import { NewBadge } from "@/components/shop/new-badge";
 import { RatingBadge } from "@/components/shop/stars";
 import { TierBadge } from "@/components/shop/tier-badge";
@@ -163,6 +164,7 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
         dangerouslySetInnerHTML={{ __html: jsonLd(shop, siteUrl()) }}
       />
 
+      <ShopTracker slug={shop.slug} />
       <article className="flex flex-col gap-8">
         {photos.length > 0 ? (
           <PhotoCarousel photos={photos} />
@@ -223,7 +225,12 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
 
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="crema">
-                <a href={directions} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={directions}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-track="directions"
+                >
                   <Navigation /> Directions
                 </a>
               </Button>
@@ -302,6 +309,7 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
                     <li key={href}>
                       <a
                         href={href}
+                        data-track="contact"
                         {...(href.startsWith("http")
                           ? { target: "_blank", rel: "noopener noreferrer" }
                           : {})}

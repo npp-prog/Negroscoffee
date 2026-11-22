@@ -29,6 +29,7 @@ import { EMPTY_FILTERS, hasActiveFilters } from "@/lib/filters";
 import { distanceM, type LatLng } from "@/lib/geo";
 import { isOpenAt } from "@/lib/hours";
 import { isNewShop } from "@/lib/new";
+import { trackOnce } from "@/lib/track";
 
 const MapView = dynamic(() => import("@/components/map/map-view"), {
   ssr: false,
@@ -151,6 +152,11 @@ export function ExploreShell() {
   ]);
 
   // --- selection ----------------------------------------------------------------------------
+  // Count a "map tap" for owner insights whenever a shop is opened on the map (incl. deep links).
+  useEffect(() => {
+    if (state.shop) trackOnce(state.shop, "map");
+  }, [state.shop]);
+
   const selectFromMap = useCallback(
     (shop: Shop) => {
       if (state.shop === shop.slug) return update({ shop: null });

@@ -3,11 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
+import { InsightsCard } from "@/components/owner/insights-card";
 import { OwnerEditor } from "@/components/owner/owner-editor";
 import { OwnerReviews } from "@/components/owner/owner-reviews";
 import { PhotoManager } from "@/components/admin/photo-manager";
 import { getViewer } from "@/lib/admin-server";
-import { getAdminShop, listShopReviews } from "@/lib/db";
+import { getAdminShop, getShopInsights, getShopRating, listShopReviews } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Edit my shop" };
 
@@ -18,7 +19,14 @@ export default async function OwnerShopPage({ params }: PageProps<"/owner/shops/
   const shop = user ? await getAdminShop(db, id) : null;
   // Published shops are readable by everyone, so check ownership explicitly.
   if (!shop || (shop.claimedBy !== user?.id && role !== "admin")) notFound();
-  const reviews = await listShopReviews(db, shop.id, 50).catch(() => []);
+  const [reviews, insights, rating] = await Promise.all([
+    listShopReviews(db, shop.id, 50).catch(() => []),
+    getShopInsights(db, shop.id, 30).catch((err) => {
+      console.error("[owner] insights", err);
+      return null;
+    }),
+    getShopRating(db, shop.id).catch(() => ({ avg: null, count: 0 })),
+  ]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -40,6 +48,9 @@ export default async function OwnerShopPage({ params }: PageProps<"/owner/shops/
           </Link>
         )}
       </div>
+      {insights && shop.status === "published" && (
+        <InsightsCard insights={insights} ratingAvg={rating.avg} ratingCount={rating.count} />
+      )}
       <section className="flex flex-col gap-4 rounded-[20px] border bg-surface p-5 shadow-soft sm:p-6">
         <h2 className="text-lg font-semibold">Photos</h2>
         <PhotoManager shopId={shop.id} photos={shop.photos} />

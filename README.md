@@ -57,6 +57,7 @@ Environment variables (see [`.env.example`](./.env.example)):
    7. `20261122000003_published_at.sql` — publish dates for the "New" filter and badges
    8. `20261122000004_email_notifications.sql` — per-person email on/off setting
    9. `20261122000005_visitor_photos.sql` — visitor photo uploads (private until approved)
+   10. `20261122000006_shop_insights.sql` — anonymous daily visit counters for owner insights
 3. Run [`supabase/seed.sql`](./supabase/seed.sql): 57 Negros cities/municipalities plus 10
    fictional demo shops (slugs `demo-*`). Remove the demos before launch:
 
@@ -97,6 +98,15 @@ menu, description, contact links and photos; changes go live immediately and app
 **Recent owner edits** on your dashboard. Name, type, address, map pin and status stay with
 admins. If a claim was approved before the owner signed in, ask them to sign in once, then use
 the **Owner** panel in the shop editor to link their email.
+
+### Owner insights
+
+Owners see **Insights · last 30 days** on their shop in My shop: page views, map taps,
+directions and calls/links taps (with change vs the previous 30 days), a daily chart, plus how
+many people saved the shop or marked it "been here". Your dashboard lists the **most viewed**
+shops of the week. Counting is anonymous (daily totals per shop, no visitor ids, IPs or cookies);
+each visitor counts once per browser session per action, and only browsers that run JavaScript
+count.
 
 ### Reviews and saved shops
 

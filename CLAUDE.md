@@ -94,6 +94,16 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   `shop_photos` with `credit` (display name) + `contributed_by`, then deletes the private file;
   reject deletes the file and keeps the row. Admin's own client throughout, no service role.
   Visitors see status and withdraw pending photos on `/saved`. Data access: `lib/db/photos.ts`.
+- Owner insights (migration `20261122000006`): `shop_daily_stats` (shop × Manila day: views,
+  map_opens, directions, contacts; no visitor data). Written only via security-definer RPC
+  `track_shop_event(slug, kind)` (anon OK, published shops only; table privileges revoked);
+  read by owners/admins (RLS) and via `shop_insights(shop_id, days)` (series, previous period,
+  favorites/visited counts). Browser side: `trackOnce()` in `lib/track.ts` (once per tab session
+  per shop+kind); `ShopTracker` on the shop page counts views and clicks on `data-track=
+"directions" | "contact"` links; ExploreShell counts `map` when `state.shop` changes. Pure
+  helpers in `lib/insights.ts` (tested); data in `lib/db/insights.ts`. UI: `InsightsCard` on
+  `/owner/shops/[id]` (published shops), "Most viewed · last 7 days" on `/admin`. Chart bar color
+  token `--chart-bar` (validated with the dataviz palette checker).
 - `/admin/review`: one-card-at-a-time draft review (type, latte price or tier, Publish / "Not a
   coffee shop" (hidden) / Skip), ordered by province → town → name. `quickReviewShop()` refuses to
   publish without type, tier/price and province.
@@ -167,7 +177,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 ## Database notes
 
 - Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets → explicit
-  API grants → owner editing → reviews & saved shops → published_at → email prefs → visitor photos). The grants file restores Supabase's standard table privileges for projects created
+  API grants → owner editing → reviews & saved shops → published_at → email prefs → visitor photos → shop insights). The grants file restores Supabase's standard table privileges for projects created
   with "automatically expose new tables" off; RLS policies still decide row access.
 - Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
   `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.

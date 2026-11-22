@@ -41,6 +41,8 @@
   --accent: #efe7dc;
   --accent-foreground: var(--foreground);
   --destructive: #b3261e;
+  /* Single-series chart bars (validated: lightness band + 3:1 vs surface). */
+  --chart-bar: #b07430;
   --input: var(--border);
   --ring: var(--accent-brand);
   --radius: 1rem;
@@ -74,6 +76,7 @@
   --muted: #2a2019;
   --accent: #2a2019;
   --destructive: #f2b8b5;
+  --chart-bar: #bf8236;
 
   --shadow-soft: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.3);
   --shadow-float: 0 2px 6px rgb(0 0 0 / 0.35), 0 16px 40px -8px rgb(0 0 0 / 0.5);

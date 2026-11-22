@@ -252,6 +252,42 @@ export type Database = {
           },
         ];
       };
+      shop_daily_stats: {
+        Row: {
+          contacts: number;
+          day: string;
+          directions: number;
+          map_opens: number;
+          shop_id: string;
+          views: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          contacts?: number;
+          day: string;
+          directions?: number;
+          map_opens?: number;
+          shop_id: string;
+          views?: number;
+        };
+        Update: {
+          contacts?: number;
+          day?: string;
+          directions?: number;
+          map_opens?: number;
+          shop_id?: string;
+          views?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shop_daily_stats_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       shop_edits: {
         Row: {
           changes: Json;
@@ -562,8 +598,10 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"];
       };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      track_shop_event: { Args: { p_slug: string; p_kind: string }; Returns: undefined };
       owns_shop: { Args: { p_shop_id: string }; Returns: boolean };
       price_tier_for: { Args: { latte_price: number }; Returns: number };
+      shop_insights: { Args: { p_shop_id: string; p_days?: number }; Returns: Json };
       shops_in_bbox: {
         Args: {
           city?: string;
