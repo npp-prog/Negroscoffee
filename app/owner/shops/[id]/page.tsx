@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 
 import { OwnerEditor } from "@/components/owner/owner-editor";
+import { OwnerReviews } from "@/components/owner/owner-reviews";
 import { PhotoManager } from "@/components/admin/photo-manager";
 import { getViewer } from "@/lib/admin-server";
-import { getAdminShop } from "@/lib/db";
+import { getAdminShop, listShopReviews } from "@/lib/db";
 
 export const metadata: Metadata = { title: "Edit my shop" };
 
@@ -17,6 +18,7 @@ export default async function OwnerShopPage({ params }: PageProps<"/owner/shops/
   const shop = user ? await getAdminShop(db, id) : null;
   // Published shops are readable by everyone, so check ownership explicitly.
   if (!shop || (shop.claimedBy !== user?.id && role !== "admin")) notFound();
+  const reviews = await listShopReviews(db, shop.id, 50).catch(() => []);
 
   return (
     <div className="flex flex-col gap-5">
@@ -42,6 +44,7 @@ export default async function OwnerShopPage({ params }: PageProps<"/owner/shops/
         <h2 className="text-lg font-semibold">Photos</h2>
         <PhotoManager shopId={shop.id} photos={shop.photos} />
       </section>
+      <OwnerReviews reviews={reviews} slug={shop.slug} />
       <OwnerEditor shop={shop} />
     </div>
   );

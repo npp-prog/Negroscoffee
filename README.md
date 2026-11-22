@@ -48,6 +48,7 @@ Environment variables (see [`.env.example`](./.env.example)):
    3. `…03_storage.sql` — `shop-photos` (public) and `submission-proofs` (private) buckets
    4. `…04_api_grants.sql` — table privileges for the API roles (needed on newer projects)
    5. `20261122000001_owner_editing.sql` — owner self-service permissions and edit log
+   6. `20261122000002_reviews_favorites.sql` — reviews, ratings, favorites and "visited"
 3. Run [`supabase/seed.sql`](./supabase/seed.sql): 57 Negros cities/municipalities plus 10
    fictional demo shops (slugs `demo-*`). Remove the demos before launch:
 
@@ -88,6 +89,13 @@ menu, description, contact links and photos; changes go live immediately and app
 **Recent owner edits** on your dashboard. Name, type, address, map pin and status stay with
 admins. If a claim was approved before the owner signed in, ask them to sign in once, then use
 the **Owner** panel in the shop editor to link their email.
+
+### Reviews and saved shops
+
+Signed-in visitors rate shops (1–5 stars, optional text, one review per shop) and save shops as
+**favorites** or **visited** (listed on `/saved`, where they also set the name shown on their
+reviews). Averages appear on shop pages and map cards. Owners reply from **My shop**; admins
+hide abusive reviews at `/admin/reviews` (hidden reviews don't count toward ratings).
 
 ## 4. Deploy (Vercel)
 

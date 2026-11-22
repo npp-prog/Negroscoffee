@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronRight, Coffee } from "lucide-react";
 
 import { OpenStatus } from "@/components/shop/open-status";
+import { RatingBadge } from "@/components/shop/stars";
 import { TierBadge } from "@/components/shop/tier-badge";
 import { TypeChip } from "@/components/shop/type-chip";
 import { SHOP_TYPE_META } from "@/lib/categories";
@@ -90,6 +91,7 @@ export function ShopCard({
           )}
         </div>
         <div className="flex min-w-0 items-center gap-2 text-[12px] text-muted-foreground">
+          <RatingBadge avg={shop.ratingAvg} count={shop.ratingCount} />
           <OpenStatus hours={shop.hours} now={now} />
           {place && <span className="truncate">{place}</span>}
           {distanceM != null && (

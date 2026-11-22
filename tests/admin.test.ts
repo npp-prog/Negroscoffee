@@ -65,3 +65,13 @@ describe("describeShopEdit", () => {
     expect(describeShopEdit({})).toBe("details");
   });
 });
+
+describe("ratingLabel", () => {
+  it("formats averages and hides empty ratings", async () => {
+    const { ratingLabel } = await import("@/lib/db/reviews");
+    expect(ratingLabel(4.6, 12)).toBe("4.6");
+    expect(ratingLabel(4, 1)).toBe("4.0");
+    expect(ratingLabel(null, 0)).toBeNull();
+    expect(ratingLabel(4.5, 0)).toBeNull();
+  });
+});

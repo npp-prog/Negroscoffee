@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { Info, MapPinOff, Plus, X } from "lucide-react";
+import { Heart, Info, MapPinOff, Plus, X } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 import type { MapRef } from "react-map-gl/maplibre";
 
@@ -313,6 +313,11 @@ export function ExploreShell() {
             <Logo />
           </Link>
           <div className="flex items-center gap-1">
+            <Button asChild variant="ghost" size="icon" aria-label="Saved shops">
+              <Link href="/saved">
+                <Heart />
+              </Link>
+            </Button>
             <Button asChild variant="ghost" size="icon" aria-label="About Kape Negros">
               <Link href="/about">
                 <Info />
@@ -411,12 +416,20 @@ export function ExploreShell() {
                     Clear all
                   </button>
                 ) : (
-                  <Link
-                    href="/about"
-                    className="text-[13px] font-medium text-muted-foreground hover:text-foreground"
-                  >
-                    About
-                  </Link>
+                  <span className="flex items-center gap-4">
+                    <Link
+                      href="/saved"
+                      className="inline-flex items-center gap-1 text-[13px] font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      <Heart className="size-3.5" aria-hidden="true" /> Saved
+                    </Link>
+                    <Link
+                      href="/about"
+                      className="text-[13px] font-medium text-muted-foreground hover:text-foreground"
+                    >
+                      About
+                    </Link>
+                  </span>
                 )}
               </div>
             )

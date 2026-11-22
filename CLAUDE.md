@@ -66,6 +66,16 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   Admin tools: "Recent owner edits" on the dashboard; Owner panel in the shop editor uses RPCs
   `admin_link_owner(shop, email)` / `admin_unlink_owner` / `admin_owner_email`. Owners hitting
   /admin are redirected to /owner. Data access: `lib/db/owner.ts`.
+- Reviews & saved shops (migration `20261122000002_reviews_favorites.sql`): `reviews` (1–5 stars +
+  text, one per user per shop, `author_name` snapshot from `profiles.display_name`, status
+  visible/hidden, `owner_reply`), guard trigger (authors edit rating/body, owners only the reply,
+  admins moderate), `shops.rating_avg/rating_count` kept by trigger (visible only) and exposed on
+  `shop_cards`; `saved_shops` (favorite/visited, private per user). Shop page: `ReviewsSection`
+  starts from the cached list then refreshes client-side (pre-built pages serve one stale copy
+  while regenerating); `SaveButtons` read/write own rows with the browser client. Don't call
+  `router.refresh()` after actions on pre-built public pages (its RSC refetch can 404 and force a
+  full reload). Pages: `/saved` (favorites, visited, display name), owner replies on
+  `/owner/shops/[id]`, moderation at `/admin/reviews`. Data access: `lib/db/reviews.ts`.
 - `/admin/review`: one-card-at-a-time draft review (type, latte price or tier, Publish / "Not a
   coffee shop" (hidden) / Skip), ordered by province → town → name. `quickReviewShop()` refuses to
   publish without type, tier/price and province.
@@ -73,7 +83,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   (offline fallback `/offline` + cache-first `/_next/static` and icons; never caches pages, admin,
   Supabase or tiles), registered by `components/pwa-register.tsx` in production only. Bump
   `VERSION` in `sw.js` when changing caching. SEO: `app/sitemap.ts` (published shops, cached with
-  tag `shops`), `app/robots.ts` (disallows /admin, /login, /auth/, /claim/).
+  tag `shops`), `app/robots.ts` (disallows /admin, /owner, /saved, /login, /auth/, /claim/).
 - Photo URLs: build with `shopPhotoUrl(SUPABASE_URL, path, size?)`; never create a Supabase client
   during render just for URLs.
 - `supabase/seed.sql` includes 10 fictional demo shops (slugs `demo-*`). Remove before launch:
@@ -131,7 +141,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 ## Database notes
 
 - Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets → explicit
-  API grants → owner editing). The grants file restores Supabase's standard table privileges for projects created
+  API grants → owner editing → reviews & saved shops). The grants file restores Supabase's standard table privileges for projects created
   with "automatically expose new tables" off; RLS policies still decide row access.
 - Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
   `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.

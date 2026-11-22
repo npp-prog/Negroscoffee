@@ -8,3 +8,4 @@ export * from "./osm-import";
 export * from "./submissions";
 export * from "./admin";
 export * from "./owner";
+export * from "./reviews";

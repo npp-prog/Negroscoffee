@@ -1,6 +1,7 @@
 import type { PriceTier, Province, ShopType } from "../categories";
 import { unwrap, type Db, type MenuItemRow, type ShopPhotoRow, type ShopRow } from "./client";
 import { parseHours, type WeeklyHours } from "./hours";
+import { listShopReviews, type Review } from "./reviews";
 
 /** Flat shop shape used by the map pins and result cards. */
 export type ShopCard = {
@@ -21,6 +22,9 @@ export type ShopCard = {
   verifiedAt: string | null;
   /** Only set by distance queries. */
   distanceM?: number;
+  /** Average of visible reviews (1 decimal) and their count. */
+  ratingAvg: number | null;
+  ratingCount: number;
 };
 
 export type ShopFilters = {
@@ -52,6 +56,8 @@ type CardSource = {
   cover_path: string | null;
   verified_at: string | null;
   distance_m?: number | null;
+  rating_avg?: number | null;
+  rating_count?: number | null;
 };
 
 function toCard(r: CardSource): ShopCard | null {
@@ -75,6 +81,8 @@ function toCard(r: CardSource): ShopCard | null {
     coverPath: r.cover_path,
     verifiedAt: r.verified_at,
     ...(r.distance_m != null ? { distanceM: r.distance_m } : {}),
+    ratingAvg: r.rating_avg != null ? Number(r.rating_avg) : null,
+    ratingCount: r.rating_count ?? 0,
   };
 }
 
@@ -134,6 +142,16 @@ export async function getShopCardBySlug(db: Db, slug: string): Promise<ShopCard 
   return row ? toCard(row) : null;
 }
 
+/** Published shops in card shape for a list of ids, in the given order. */
+export async function getShopCardsByIds(db: Db, ids: string[]): Promise<ShopCard[]> {
+  if (ids.length === 0) return [];
+  const rows = unwrap<CardSource[]>(
+    await db.from("shop_cards").select("*").in("id", ids).eq("status", "published"),
+  );
+  const byId = new Map(cards(rows).map((c) => [c.id, c]));
+  return ids.map((id) => byId.get(id)).filter((c): c is ShopCard => !!c);
+}
+
 export type ShopDetail = ShopCard & {
   description: string | null;
   phone: string | null;
@@ -145,6 +163,8 @@ export type ShopDetail = ShopCard & {
   osmId: string | null;
   photos: Pick<ShopPhotoRow, "id" | "storage_path" | "caption">[];
   menu: Pick<MenuItemRow, "id" | "name" | "price" | "category">[];
+  /** Visible reviews, newest first (up to 30). */
+  reviews: Review[];
 };
 
 /** One shop with photos and menu; null when missing or not visible to the caller. */
@@ -152,7 +172,7 @@ export async function getShopBySlug(db: Db, slug: string): Promise<ShopDetail | 
   const card = unwrap(await db.from("shop_cards").select("*").eq("slug", slug).maybeSingle());
   const base = card ? toCard(card) : null;
   if (!base) return null;
-  const [shop, photos, menu] = await Promise.all([
+  const [shop, photos, menu, reviews] = await Promise.all([
     db
       .from("shops")
       .select("description, phone, facebook_url, instagram_url, website, source, osm_id")
@@ -168,6 +188,7 @@ export async function getShopBySlug(db: Db, slug: string): Promise<ShopDetail | 
       .select("id, name, price, category")
       .eq("shop_id", base.id)
       .order("sort_order"),
+    listShopReviews(db, base.id).catch(() => [] as Review[]),
   ]);
   const extra =
     unwrap<
@@ -187,6 +208,7 @@ export async function getShopBySlug(db: Db, slug: string): Promise<ShopDetail | 
     osmId: extra.osm_id,
     photos: unwrap(photos),
     menu: unwrap(menu),
+    reviews,
   };
 }
 

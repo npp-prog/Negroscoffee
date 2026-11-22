@@ -99,6 +99,101 @@ export type Database = {
         };
         Relationships: [];
       };
+      reviews: {
+        Row: {
+          author_name: string;
+          body: string | null;
+          created_at: string;
+          id: string;
+          owner_replied_at: string | null;
+          owner_reply: string | null;
+          rating: number;
+          shop_id: string;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          author_name?: string;
+          body?: string | null;
+          created_at?: string;
+          id?: string;
+          owner_replied_at?: string | null;
+          owner_reply?: string | null;
+          rating: number;
+          shop_id: string;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          author_name?: string;
+          body?: string | null;
+          created_at?: string;
+          id?: string;
+          owner_replied_at?: string | null;
+          owner_reply?: string | null;
+          rating?: number;
+          shop_id?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reviews_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reviews_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      saved_shops: {
+        Row: {
+          created_at: string;
+          kind: string;
+          shop_id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          kind: string;
+          shop_id: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          kind?: string;
+          shop_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "saved_shops_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "saved_shops_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       shop_edits: {
         Row: {
           changes: Json;
@@ -213,6 +308,8 @@ export type Database = {
           status: Database["public"]["Enums"]["shop_status"];
           type: Database["public"]["Enums"]["shop_type"] | null;
           updated_at: string;
+          rating_avg: number | null;
+          rating_count: number;
           verified_at: string | null;
           website: string | null;
         };
@@ -240,6 +337,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["shop_status"];
           type?: Database["public"]["Enums"]["shop_type"] | null;
           updated_at?: string;
+          rating_avg?: number | null;
+          rating_count?: number;
           verified_at?: string | null;
           website?: string | null;
         };
@@ -266,6 +365,8 @@ export type Database = {
           status?: Database["public"]["Enums"]["shop_status"];
           type?: Database["public"]["Enums"]["shop_type"] | null;
           updated_at?: string;
+          rating_avg?: number | null;
+          rating_count?: number;
           verified_at?: string | null;
           website?: string | null;
         };
@@ -376,6 +477,8 @@ export type Database = {
           slug: string;
           status: Database["public"]["Enums"]["shop_status"];
           type: Database["public"]["Enums"]["shop_type"] | null;
+          rating_avg: number | null;
+          rating_count: number | null;
           verified_at: string | null;
         };
         ComputedFields: never;
@@ -421,6 +524,8 @@ export type Database = {
           slug: string;
           status: Database["public"]["Enums"]["shop_status"];
           type: Database["public"]["Enums"]["shop_type"] | null;
+          rating_avg: number | null;
+          rating_count: number | null;
           verified_at: string | null;
         }[];
         SetofOptions: {

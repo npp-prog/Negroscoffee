@@ -20,6 +20,9 @@ import { HoursTable } from "@/components/shop/hours-table";
 import { LiveOpenStatus } from "@/components/shop/live-open-status";
 import { MenuPrices } from "@/components/shop/menu-prices";
 import { PhotoCarousel } from "@/components/shop/photo-carousel";
+import { ReviewsSection } from "@/components/shop/reviews-section";
+import { SaveButtons } from "@/components/shop/save-buttons";
+import { RatingBadge } from "@/components/shop/stars";
 import { TierBadge } from "@/components/shop/tier-badge";
 import { TypeChip } from "@/components/shop/type-chip";
 import { Button } from "@/components/ui/button";
@@ -101,6 +104,16 @@ function jsonLd(shop: ShopDetail, base: string) {
     telephone: shop.phone ?? undefined,
     sameAs: [shop.facebookUrl, shop.instagramUrl, shop.website].filter(Boolean),
     openingHoursSpecification: hours?.length ? hours : undefined,
+    aggregateRating:
+      shop.ratingCount > 0 && shop.ratingAvg != null
+        ? {
+            "@type": "AggregateRating",
+            ratingValue: shop.ratingAvg,
+            reviewCount: shop.ratingCount,
+            bestRating: 5,
+            worstRating: 1,
+          }
+        : undefined,
   };
   // Escape "<" so the JSON can't close the script tag.
   return JSON.stringify(data).replace(/</g, "\\u003c");
@@ -189,7 +202,18 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
                   {shop.address ? `${shop.address}, ${place}` : place}
                 </p>
               )}
-              <LiveOpenStatus hours={shop.hours} />
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <LiveOpenStatus hours={shop.hours} />
+                {shop.ratingCount > 0 && (
+                  <a href="#reviews" className="rounded-full hover:underline">
+                    <RatingBadge
+                      avg={shop.ratingAvg}
+                      count={shop.ratingCount}
+                      className="text-sm"
+                    />
+                  </a>
+                )}
+              </div>
             </header>
 
             <div className="flex flex-wrap gap-2">
@@ -203,6 +227,7 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
                   <MapPin /> View on map
                 </Link>
               </Button>
+              <SaveButtons shopId={shop.id} slug={shop.slug} />
             </div>
 
             {shop.description && (
@@ -237,6 +262,15 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
                 </p>
               )}
             </section>
+
+            <ReviewsSection
+              shopId={shop.id}
+              slug={shop.slug}
+              shopName={shop.name}
+              initialReviews={shop.reviews}
+              initialAvg={shop.ratingAvg}
+              initialCount={shop.ratingCount}
+            />
           </div>
 
           <aside className="flex flex-col gap-4">

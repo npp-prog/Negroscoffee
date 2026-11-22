@@ -652,3 +652,8 @@ export async function quickReviewShop(
   );
   return { ok: true, slug: row.slug };
 }
+
+/** The caller updates their own public display name (shown on reviews). */
+export async function updateMyDisplayName(db: Db, userId: string, name: string | null) {
+  unwrap(await db.from("profiles").update({ display_name: name }).eq("id", userId).select("id"));
+}
