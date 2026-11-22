@@ -1,7 +1,15 @@
 "use server";
 
-import { getViewer } from "@/lib/admin-server";
-import { deleteMyPendingPhoto, updateMyDisplayName, updateMyNotifyEmail } from "@/lib/db";
+import { redirect } from "next/navigation";
+
+import { expireShops, getViewer } from "@/lib/admin-server";
+import {
+  deleteAccount,
+  deleteMyPendingPhoto,
+  updateMyDisplayName,
+  updateMyNotifyEmail,
+} from "@/lib/db";
+import { getAdminSupabase } from "@/lib/supabase/admin";
 
 export async function updateDisplayNameAction(
   name: string,
@@ -46,4 +54,27 @@ export async function withdrawPhotoAction(id: string): Promise<{ ok: boolean; er
     console.error("[saved] withdraw photo", err);
     return { ok: false, error: "Couldn't withdraw. Try again." };
   }
+}
+
+/** Permanently delete the signed-in account. `confirm` must be "DELETE". */
+export async function deleteAccountAction(confirm: string): Promise<{ ok: false; error: string }> {
+  if (confirm !== "DELETE") return { ok: false, error: "Type DELETE to confirm." };
+  try {
+    const { db, user, role } = await getViewer();
+    if (!user) return { ok: false, error: "Not signed in." };
+    if (role === "admin")
+      return {
+        ok: false,
+        error: "Admin accounts can't be deleted here. Remove the admin role first.",
+      };
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY)
+      return { ok: false, error: "Account deletion isn't set up yet. Please contact us." };
+    const slugs = await deleteAccount(getAdminSupabase(), user.id);
+    if (slugs.length) expireShops(slugs);
+    await db.auth.signOut().catch(() => {});
+  } catch (err) {
+    console.error("[saved] delete account", err);
+    return { ok: false, error: "Couldn't delete your account. Try again." };
+  }
+  redirect("/?deleted=1");
 }

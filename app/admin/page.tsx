@@ -2,10 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Download, Plus } from "lucide-react";
 
+import { LaunchChecklist } from "@/components/admin/launch-checklist";
 import { Button } from "@/components/ui/button";
+import { CONTACT_EMAIL } from "@/lib/env";
+import { launchChecklist } from "@/lib/launch";
+import { siteUrl } from "@/lib/site";
 import { getServerSupabase } from "@/lib/supabase/server";
 import {
   countPendingPhotos,
+  listDemoShopSlugs,
   describeShopEdit,
   getAdminCounts,
   listRecentShopEdits,
@@ -43,12 +48,23 @@ function Stat({
 
 export default async function AdminDashboard() {
   const db = await getServerSupabase();
-  const [counts, pending, edits, photoCount] = await Promise.all([
+  const [counts, pending, edits, photoCount, demoSlugs] = await Promise.all([
     getAdminCounts(db),
     listSubmissions(db, { status: "pending", limit: 6 }),
     listRecentShopEdits(db, 8).catch(() => []),
     countPendingPhotos(db).catch(() => 0),
+    listDemoShopSlugs(db).catch(() => [] as string[]),
   ]);
+  const launch = launchChecklist({
+    demoShops: demoSlugs.length,
+    publishedShops: counts.shops.published,
+    hasMapKey: !!process.env.NEXT_PUBLIC_MAPTILER_KEY,
+    hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    hasContactEmail: !!CONTACT_EMAIL,
+    hasEmail: !!process.env.RESEND_API_KEY,
+    siteUrl: siteUrl(),
+  });
+  const launchReady = launch.every((i) => i.optional || i.done);
   const pendingTotal = counts.pending.new_shop + counts.pending.claim + counts.pending.correction;
   const published = counts.shops.published || 1;
 
@@ -62,6 +78,8 @@ export default async function AdminDashboard() {
           </Link>
         </Button>
       </div>
+
+      {!launchReady && <LaunchChecklist items={launch} />}
 
       <section aria-labelledby="shops-h" className="flex flex-col gap-3">
         <h2 id="shops-h" className="text-lg font-semibold">
@@ -209,6 +227,7 @@ export default async function AdminDashboard() {
         <code className="rounded bg-muted px-1.5 py-0.5">npm run import:osm</code>; they arrive as
         drafts here.
       </p>
+      {launchReady && <LaunchChecklist items={launch} />}
     </div>
   );
 }

@@ -669,3 +669,17 @@ export async function updateMyDisplayName(db: Db, userId: string, name: string |
 export async function updateMyNotifyEmail(db: Db, userId: string, on: boolean) {
   unwrap(await db.from("profiles").update({ notify_email: on }).eq("id", userId).select("id"));
 }
+
+// --- launch ---------------------------------------------------------------------------------
+
+/** Slugs of the fictional demo shops from supabase/seed.sql (slug prefix `demo-`). */
+export async function listDemoShopSlugs(db: Db): Promise<string[]> {
+  const rows = unwrap(await db.from("shops").select("slug").like("slug", "demo-%"));
+  return rows.map((r) => r.slug);
+}
+
+/** Delete the demo shops (and, by cascade, their photos rows, menus and reviews). */
+export async function deleteDemoShops(db: Db): Promise<string[]> {
+  const rows = unwrap(await db.from("shops").delete().like("slug", "demo-%").select("slug"));
+  return rows.map((r) => r.slug);
+}

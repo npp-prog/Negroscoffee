@@ -35,6 +35,7 @@ Environment variables (see [`.env.example`](./.env.example)):
 | `NEXT_PUBLIC_MAPTILER_KEY`      | yes      | Without it the app works but shows a placeholder instead of the map  |
 | `NEXT_PUBLIC_SITE_URL`          | no       | Your public URL; defaults to Vercel's production URL                 |
 | `SUPABASE_SERVICE_ROLE_KEY`     | import   | OpenStreetMap import and email lookups. Secret: never in the browser |
+| `NEXT_PUBLIC_CONTACT_EMAIL`     | no       | Contact address shown on `/privacy` (any inbox you check)            |
 | `RESEND_API_KEY`                | no       | Turns on email notifications (section 3)                             |
 | `EMAIL_FROM`                    | no       | Sender, e.g. `Kape Negros <hello@yourdomain.com>` (verified domain)  |
 | `NOTIFY_ADMIN_EMAILS`           | no       | Comma-separated admin inboxes; default: admins with emails on        |
@@ -141,6 +142,18 @@ are logged in Vercel's function logs (`[email]`).
    kapenegros.vercel.app
    *.vercel.app
    ```
+
+### Before launch
+
+The admin dashboard shows a **Launch checklist** until the required items are done: demo shops
+removed (one tap), at least 20 real shops published, map key, and the service key (needed for
+self-service account deletion). Optional: contact email on `/privacy`, email notifications,
+custom domain.
+
+Visitors can read `/privacy` (privacy & community rules, Philippine Data Privacy Act) and delete
+their own account at the bottom of `/saved`: this removes their account, reviews, lists and
+pending photos, releases claimed shops (they stay verified) and keeps approved photos without the
+name. Admin accounts can't delete themselves there.
 
 ## 5. Add real coffee shops
 

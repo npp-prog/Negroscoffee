@@ -10,3 +10,4 @@ export * from "./admin";
 export * from "./owner";
 export * from "./reviews";
 export * from "./photos";
+export * from "./account";

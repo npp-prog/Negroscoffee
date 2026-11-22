@@ -29,3 +29,6 @@ export function hasSupabaseEnv() {
 
 /** Supabase project URL for building public asset URLs (empty when not configured). */
 export const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+
+/** Optional public contact address shown on the Privacy page (e.g. a Gmail address). */
+export const CONTACT_EMAIL = (process.env.NEXT_PUBLIC_CONTACT_EMAIL ?? "").trim();

@@ -91,6 +91,12 @@ export default function AboutPage() {
             or claim their listing.
           </p>
         </section>
+
+        <p className="text-sm text-muted-foreground">
+          <Link className="underline underline-offset-4 hover:text-foreground" href="/privacy">
+            Privacy &amp; community rules
+          </Link>
+        </p>
       </article>
     </PageShell>
   );

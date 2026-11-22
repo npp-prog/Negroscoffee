@@ -6,6 +6,7 @@ import { Camera, Check, Heart, LogOut } from "lucide-react";
 
 import { signOutAction } from "@/app/login/actions";
 import { PageShell } from "@/components/layout/page-shell";
+import { DeleteAccount } from "@/components/saved/delete-account";
 import { DisplayNameForm } from "@/components/saved/display-name-form";
 import { EmailPrefs } from "@/components/saved/email-prefs";
 import { MyPhotos } from "@/components/saved/my-photos";
@@ -124,6 +125,12 @@ async function SavedContent() {
         <DisplayNameForm initial={profile?.display_name ?? ""} />
         <hr className="my-5 border-border" />
         <EmailPrefs initial={profile?.notify_email ?? true} role={profile?.role ?? "user"} />
+        {role !== "admin" && (
+          <>
+            <hr className="my-5 border-border" />
+            <DeleteAccount />
+          </>
+        )}
       </section>
     </div>
   );

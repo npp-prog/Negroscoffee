@@ -2,6 +2,7 @@ import { Suspense } from "react";
 
 import { ExploreShell } from "@/components/explore/explore-shell";
 import { MapPlaceholder } from "@/components/explore/map-placeholder";
+import { FlashNotice } from "@/components/flash-notice";
 
 export default function HomePage() {
   return (
@@ -15,6 +16,7 @@ export default function HomePage() {
       }
     >
       <ExploreShell />
+      <FlashNotice />
     </Suspense>
   );
 }

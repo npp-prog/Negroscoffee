@@ -105,7 +105,15 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 - Photo URLs: build with `shopPhotoUrl(SUPABASE_URL, path, size?)`; never create a Supabase client
   during render just for URLs.
 - `supabase/seed.sql` includes 10 fictional demo shops (slugs `demo-*`). Remove before launch:
+  dashboard "Remove demo shops" (`removeDemoShopsAction`) or
   `delete from public.shops where slug like 'demo-%';`
+- Launch: `lib/launch.ts` (pure checklist, tested) feeds `LaunchChecklist` on `/admin` (shown on top
+  until required items pass). `/privacy` = privacy & community rules (`NEXT_PUBLIC_CONTACT_EMAIL`
+  optional). Account deletion on `/saved` (`deleteAccountAction` → `deleteAccount()` in
+  `lib/db/account.ts`, service role: removes private photo files, clears photo credits, then
+  `auth.admin.deleteUser`; DB cascades do the rest, see `06_account_deletion.test.sql`). Not for
+  admins. Redirects to `/?deleted=1` (`FlashNotice` toast). `app/error.tsx` is the friendly
+  error page; `app/opengraph-image.tsx` is the default social image.
 
 ## Domain
 
