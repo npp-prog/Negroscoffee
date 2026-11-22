@@ -47,6 +47,7 @@ Environment variables (see [`.env.example`](./.env.example)):
    2. `…02_rls_and_search.sql` — row-level security, `shop_cards` view, search functions
    3. `…03_storage.sql` — `shop-photos` (public) and `submission-proofs` (private) buckets
    4. `…04_api_grants.sql` — table privileges for the API roles (needed on newer projects)
+   5. `20261122000001_owner_editing.sql` — owner self-service permissions and edit log
 3. Run [`supabase/seed.sql`](./supabase/seed.sql): 57 Negros cities/municipalities plus 10
    fictional demo shops (slugs `demo-*`). Remove the demos before launch:
 
@@ -78,6 +79,15 @@ Each file runs once; the grants file is safe to re-run. With the Supabase CLI in
    ```
 
 4. Open `/admin`.
+
+### Shop owners
+
+When you approve a claim from a signed-in claimant, their account becomes an **owner** of that
+shop. Owners sign in and go to `/owner` to update prices (the tier follows the latte price), hours,
+menu, description, contact links and photos; changes go live immediately and appear under
+**Recent owner edits** on your dashboard. Name, type, address, map pin and status stay with
+admins. If a claim was approved before the owner signed in, ask them to sign in once, then use
+the **Owner** panel in the shop editor to link their email.
 
 ## 4. Deploy (Vercel)
 

@@ -99,6 +99,53 @@ export type Database = {
         };
         Relationships: [];
       };
+      shop_edits: {
+        Row: {
+          changes: Json;
+          created_at: string;
+          id: string;
+          shop_id: string;
+          user_id: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          changes?: Json;
+          created_at?: string;
+          id?: string;
+          shop_id: string;
+          user_id?: string | null;
+        };
+        Update: {
+          changes?: Json;
+          created_at?: string;
+          id?: string;
+          shop_id?: string;
+          user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shop_edits_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shop_cards";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shop_edits_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "shop_edits_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       shop_photos: {
         Row: {
           caption: string | null;
@@ -336,11 +383,15 @@ export type Database = {
       };
     };
     Functions: {
+      admin_link_owner: { Args: { p_email: string; p_shop_id: string }; Returns: string };
+      admin_owner_email: { Args: { p_shop_id: string }; Returns: string };
+      admin_unlink_owner: { Args: { p_shop_id: string }; Returns: undefined };
       current_user_role: {
         Args: Record<PropertyKey, never>;
         Returns: Database["public"]["Enums"]["user_role"];
       };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      owns_shop: { Args: { p_shop_id: string }; Returns: boolean };
       price_tier_for: { Args: { latte_price: number }; Returns: number };
       shops_in_bbox: {
         Args: {

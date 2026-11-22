@@ -4,7 +4,7 @@ import { ArrowRight, Download, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { getServerSupabase } from "@/lib/supabase/server";
-import { getAdminCounts, listSubmissions } from "@/lib/db";
+import { describeShopEdit, getAdminCounts, listRecentShopEdits, listSubmissions } from "@/lib/db";
 import { SHOP_TYPE_META, SHOP_TYPES } from "@/lib/categories";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -37,9 +37,10 @@ function Stat({
 
 export default async function AdminDashboard() {
   const db = await getServerSupabase();
-  const [counts, pending] = await Promise.all([
+  const [counts, pending, edits] = await Promise.all([
     getAdminCounts(db),
     listSubmissions(db, { status: "pending", limit: 6 }),
+    listRecentShopEdits(db, 8).catch(() => []),
   ]);
   const pendingTotal = counts.pending.new_shop + counts.pending.claim + counts.pending.correction;
   const published = counts.shops.published || 1;
@@ -147,6 +148,44 @@ export default async function AdminDashboard() {
                     {new Date(s.createdAt).toLocaleDateString("en-PH", {
                       month: "short",
                       day: "numeric",
+                    })}
+                  </time>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="edits-h" className="flex flex-col gap-3">
+        <h2 id="edits-h" className="text-lg font-semibold">
+          Recent owner edits
+        </h2>
+        {edits.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No owner edits yet.</p>
+        ) : (
+          <ul className="divide-y rounded-[20px] border bg-surface shadow-soft">
+            {edits.map((e) => (
+              <li key={e.id}>
+                <Link
+                  href={e.shop ? `/admin/shops/${e.shop.id}` : "/admin/shops"}
+                  className="flex min-h-14 items-center gap-3 px-5 py-3 text-sm hover:bg-accent/50"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="font-medium">{e.shop?.name ?? "Deleted shop"}</span>
+                    <span className="text-muted-foreground"> · {describeShopEdit(e.changes)}</span>
+                    {e.editor && <span className="text-muted-foreground"> · by {e.editor}</span>}
+                  </span>
+                  <time
+                    className="shrink-0 text-[12px] text-muted-foreground tabular"
+                    dateTime={e.createdAt}
+                  >
+                    {new Date(e.createdAt).toLocaleString("en-PH", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      timeZone: "Asia/Manila",
                     })}
                   </time>
                 </Link>

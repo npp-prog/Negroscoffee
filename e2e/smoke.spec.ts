@@ -65,6 +65,11 @@ test.describe("auth and admin", () => {
     await expect(page.getByRole("button", { name: "Email me a sign-in link" })).toBeVisible();
   });
 
+  test("owner area explains missing configuration instead of crashing", async ({ page }) => {
+    await page.goto("/owner");
+    await expect(page.getByText("Supabase isn't configured")).toBeVisible();
+  });
+
   test("admin explains missing configuration instead of crashing", async ({ page }) => {
     await page.goto("/admin");
     await expect(page.getByText("Supabase isn't configured")).toBeVisible();

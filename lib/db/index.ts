@@ -7,3 +7,4 @@ export type { Database, Json } from "./types";
 export * from "./osm-import";
 export * from "./submissions";
 export * from "./admin";
+export * from "./owner";

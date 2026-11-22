@@ -2,17 +2,21 @@
 
 import { redirect } from "next/navigation";
 
-import { expireShops, NotAdminError, requireAdmin } from "@/lib/admin-server";
+import { expireShops, NotAdminError, requireAdmin, requireShopEditor } from "@/lib/admin-server";
 import {
   addShopPhoto,
   createShop,
   deleteShop,
   deleteShopPhoto,
   getAdminShop,
+  getOwnerEmail,
+  linkOwnerByEmail,
+  logShopEdit,
   reorderShopPhotos,
   replaceMenu,
   slugTaken,
   updateShop,
+  unlinkOwner,
   type ShopEdit,
 } from "@/lib/db";
 import type { FormState } from "@/lib/forms";
@@ -126,10 +130,11 @@ export async function uploadPhotosAction(shopId: string, form: FormData): Promis
     if (!files.length) return { ok: false, error: "Choose at least one photo." };
     const bad = files.find((f) => !PHOTO_TYPES.includes(f.type) || f.size > PHOTO_MAX);
     if (bad) return { ok: false, error: `${bad.name}: use JPG, PNG, WebP or AVIF under 8 MB.` };
-    const { db } = await requireAdmin();
+    const { db, userId, isAdmin } = await requireShopEditor(shopId);
     const shop = await getAdminShop(db, shopId);
     if (!shop) return { ok: false, error: "Shop not found" };
     for (const f of files.slice(0, 10)) await addShopPhoto(db, shopId, f);
+    if (!isAdmin) await logShopEdit(db, shopId, userId, { photos: "added" });
     expireShops([shop.slug]);
     return { ok: true, added: Math.min(files.length, 10) };
   } catch (err) {
@@ -140,10 +145,11 @@ export async function uploadPhotosAction(shopId: string, form: FormData): Promis
 export async function deletePhotoAction(shopId: string, photoId: string): Promise<PhotoResult> {
   try {
     if (!UUID.test(shopId) || !UUID.test(photoId)) return { ok: false, error: "Bad id" };
-    const { db } = await requireAdmin();
+    const { db, userId, isAdmin } = await requireShopEditor(shopId);
     const shop = await getAdminShop(db, shopId);
     if (!shop?.photos.some((p) => p.id === photoId)) return { ok: false, error: "Photo not found" };
     await deleteShopPhoto(db, photoId);
+    if (!isAdmin) await logShopEdit(db, shopId, userId, { photos: "deleted" });
     expireShops([shop.slug]);
     return { ok: true };
   } catch (err) {
@@ -158,13 +164,55 @@ export async function reorderPhotosAction(
   try {
     if (!UUID.test(shopId) || !orderedIds.every((x) => UUID.test(x)))
       return { ok: false, error: "Bad id" };
-    const { db } = await requireAdmin();
+    const { db, userId, isAdmin } = await requireShopEditor(shopId);
     const shop = await getAdminShop(db, shopId);
     if (!shop) return { ok: false, error: "Shop not found" };
     await reorderShopPhotos(db, shopId, orderedIds);
+    if (!isAdmin) await logShopEdit(db, shopId, userId, { photos: "reordered" });
     expireShops([shop.slug]);
     return { ok: true };
   } catch (err) {
     return { ok: false, error: fail(err).errors?.form ?? "Reorder failed" };
+  }
+}
+
+export type LinkResult = { ok: true; email: string | null } | { ok: false; error: string };
+
+export async function linkOwnerAction(shopId: string, email: string): Promise<LinkResult> {
+  try {
+    if (!UUID.test(shopId)) return { ok: false, error: "Bad id" };
+    const clean = email.trim();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(clean))
+      return { ok: false, error: "Enter a valid email" };
+    const { db } = await requireAdmin();
+    await linkOwnerByEmail(db, shopId, clean);
+    const shop = await getAdminShop(db, shopId);
+    if (shop) expireShops([shop.slug]);
+    return { ok: true, email: await getOwnerEmail(db, shopId) };
+  } catch (err) {
+    if (err instanceof NotAdminError) return { ok: false, error: "Admins only" };
+    const msg = err instanceof Error ? err.message : "";
+    if (/no account/.test(msg)) {
+      return {
+        ok: false,
+        error:
+          "No account with that email yet. Ask the owner to sign in once at /login, then try again.",
+      };
+    }
+    console.error("[admin] link owner", err);
+    return { ok: false, error: "Couldn't link the owner. Try again." };
+  }
+}
+
+export async function unlinkOwnerAction(shopId: string): Promise<LinkResult> {
+  try {
+    if (!UUID.test(shopId)) return { ok: false, error: "Bad id" };
+    const { db } = await requireAdmin();
+    await unlinkOwner(db, shopId);
+    return { ok: true, email: null };
+  } catch (err) {
+    if (err instanceof NotAdminError) return { ok: false, error: "Admins only" };
+    console.error("[admin] unlink owner", err);
+    return { ok: false, error: "Couldn't remove the owner. Try again." };
   }
 }

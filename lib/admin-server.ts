@@ -3,7 +3,7 @@ import "server-only";
 import { updateTag } from "next/cache";
 
 import { shopTag } from "@/app/shop/[slug]/data";
-import { getProfileRole, type Db } from "@/lib/db";
+import { getProfileRole, ownsShop, type Db } from "@/lib/db";
 import { getServerSupabase } from "@/lib/supabase/server";
 
 export type AdminContext = { db: Db; userId: string; email: string | null };
@@ -37,4 +37,20 @@ export async function requireAdmin(): Promise<AdminContext> {
 export function expireShops(slugs: string[]) {
   updateTag("shops");
   for (const slug of new Set(slugs)) updateTag(shopTag(slug));
+}
+
+/**
+ * Server Actions that edit one shop start here: admins may edit any shop, verified owners only
+ * their own (RLS and the guard trigger enforce the same in the database).
+ */
+export async function requireShopEditor(
+  shopId: string,
+): Promise<AdminContext & { isAdmin: boolean }> {
+  const { db, user, role } = await getViewer();
+  if (!user) throw new NotAdminError();
+  if (role === "admin") return { db, userId: user.id, email: user.email ?? null, isAdmin: true };
+  if (role === "owner" && (await ownsShop(db, shopId))) {
+    return { db, userId: user.id, email: user.email ?? null, isAdmin: false };
+  }
+  throw new NotAdminError();
 }

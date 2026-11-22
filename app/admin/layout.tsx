@@ -29,6 +29,7 @@ async function AdminGate({ children }: { children: React.ReactNode }) {
   }
   const { user, role } = await getViewer();
   if (!user) redirect("/login?next=/admin");
+  if (role === "owner") redirect("/owner");
   if (role !== "admin") {
     return (
       <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-16 text-center">

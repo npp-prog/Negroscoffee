@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { StatusBadge } from "@/components/admin/status-badge";
+import { OwnerPanel } from "@/components/admin/owner-panel";
 import { PhotoManager } from "@/components/admin/photo-manager";
 import { ShopEditor, type CityChoice } from "@/components/admin/shop-editor";
 import type { AdminShop } from "@/lib/db";
@@ -10,10 +11,12 @@ export function EditorPage({
   shop,
   cities,
   created,
+  ownerEmail = null,
 }: {
   shop: AdminShop | null;
   cities: CityChoice[];
   created?: boolean;
+  ownerEmail?: string | null;
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -51,6 +54,7 @@ export function EditorPage({
           <PhotoManager shopId={shop.id} photos={shop.photos} />
         </section>
       )}
+      {shop && <OwnerPanel shopId={shop.id} ownerEmail={ownerEmail} />}
       <ShopEditor key={shop?.id ?? "new"} shop={shop} cities={cities} />
     </div>
   );

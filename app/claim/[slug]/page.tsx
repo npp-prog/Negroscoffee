@@ -5,6 +5,7 @@ import { BadgeCheck, ShieldCheck } from "lucide-react";
 
 import { getPrerenderSlugs, getPublicShop } from "@/app/shop/[slug]/data";
 import { ClaimForm } from "@/components/forms/claim-form";
+import { ClaimSignInHint } from "@/components/forms/claim-sign-in-hint";
 import { PageShell } from "@/components/layout/page-shell";
 
 export async function generateStaticParams() {
@@ -48,7 +49,7 @@ export default async function ClaimPage({ params }: PageProps<"/claim/[slug]">) 
           {[
             "Send your details and proof",
             "We verify, usually within a few days",
-            "You get access to edit your listing",
+            "Update prices, hours and photos yourself",
           ].map((step, i) => (
             <li key={step} className="flex items-start gap-2.5 rounded-2xl border bg-surface p-3">
               <span className="grid size-6 shrink-0 place-items-center rounded-full bg-crema text-[12px] font-bold text-crema-foreground">
@@ -58,6 +59,8 @@ export default async function ClaimPage({ params }: PageProps<"/claim/[slug]">) 
             </li>
           ))}
         </ul>
+
+        <ClaimSignInHint slug={shop.slug} />
 
         <ClaimForm shop={{ slug: shop.slug, name: shop.name }} />
 

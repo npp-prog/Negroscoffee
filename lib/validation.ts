@@ -273,3 +273,16 @@ export const adminShopSchema = z.object({
   ),
 });
 export type AdminShopInput = z.infer<typeof adminShopSchema>;
+
+/** What a verified owner may edit (a subset of the admin editor). */
+export const ownerShopSchema = adminShopSchema.pick({
+  description: true,
+  lattePrice: true,
+  hours: true,
+  menu: true,
+  phone: true,
+  website: true,
+  facebookUrl: true,
+  instagramUrl: true,
+});
+export type OwnerShopInput = z.infer<typeof ownerShopSchema>;

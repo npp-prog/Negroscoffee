@@ -55,3 +55,13 @@ describe("adminShopSchema", () => {
     ).toBe(false);
   });
 });
+
+describe("describeShopEdit", () => {
+  it("summarizes owner edits", async () => {
+    const { describeShopEdit } = await import("@/lib/db/owner");
+    expect(describeShopEdit({ fields: ["hours", "latte_price"] })).toBe("hours, latte price");
+    expect(describeShopEdit({ menu: 1 })).toBe("menu (1 item)");
+    expect(describeShopEdit({ photos: "added" })).toBe("photos added");
+    expect(describeShopEdit({})).toBe("details");
+  });
+});

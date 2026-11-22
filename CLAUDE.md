@@ -56,6 +56,16 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   Every admin Server Action calls `requireAdmin()` (actions are public endpoints); writes use the
   admin's own client (RLS admin policies), never the service role. After shop writes call
   `expireShops([slugs])` (`updateTag`) so public pages refresh. Data access: `lib/db/admin.ts`.
+- Owners (`/owner`): verified owners (`profiles.role = 'owner'`, `shops.claimed_by` = them) edit
+  description, latte price (tier follows it), hours, menu, phone/website/socials and photos of their
+  own shops; changes go live. Migration `20261122000001_owner_editing.sql`: `owns_shop()`, owner
+  RLS on shops/menu/photos/storage (`<shop_id>/…`), `shops_guard_owner_edit` trigger locks name,
+  slug, type, status, pin, town, address, claim/verification (insufficient_privilege), and logs
+  non-admin field edits to `shop_edits` (menu/photo edits logged by the app via `logShopEdit`).
+  Actions that edit one shop use `requireShopEditor(shopId)` (admin or that shop's owner).
+  Admin tools: "Recent owner edits" on the dashboard; Owner panel in the shop editor uses RPCs
+  `admin_link_owner(shop, email)` / `admin_unlink_owner` / `admin_owner_email`. Owners hitting
+  /admin are redirected to /owner. Data access: `lib/db/owner.ts`.
 - `/admin/review`: one-card-at-a-time draft review (type, latte price or tier, Publish / "Not a
   coffee shop" (hidden) / Skip), ordered by province → town → name. `quickReviewShop()` refuses to
   publish without type, tier/price and province.
@@ -121,7 +131,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 ## Database notes
 
 - Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets → explicit
-  API grants). The grants file restores Supabase's standard table privileges for projects created
+  API grants → owner editing). The grants file restores Supabase's standard table privileges for projects created
   with "automatically expose new tables" off; RLS policies still decide row access.
 - Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
   `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.
