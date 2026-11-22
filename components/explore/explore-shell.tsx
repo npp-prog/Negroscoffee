@@ -31,7 +31,10 @@ import { isOpenAt } from "@/lib/hours";
 import { isNewShop } from "@/lib/new";
 import { trackOnce } from "@/lib/track";
 
-const MapView = dynamic(() => import("@/components/map/map-view"), {
+// Kick off the (large) map chunk download right away instead of after the first render.
+const loadMap = () => import("@/components/map/map-view");
+if (typeof window !== "undefined") void loadMap();
+const MapView = dynamic(loadMap, {
   ssr: false,
   loading: () => <MapPlaceholder />,
 });
@@ -70,15 +73,19 @@ export function ExploreShell() {
   const islandWide = q.trim() !== "" || !!state.city;
   const fetched = shopsQuery.data;
 
-  // Pins: everything fetched that passes the client-side open-now filter.
+  // Pins: everything fetched that passes the client-side open-now / new filters. The clock only
+  // matters when one of those is on, so the minute tick doesn't rebuild clusters otherwise.
+  const filterClock = state.openNow || state.newOnly ? now : null;
   const pins = useMemo(
     () =>
-      (fetched ?? []).filter(
-        (s) =>
-          (!state.openNow || isOpenAt(s.hours, now)) &&
-          (!state.newOnly || isNewShop(s.publishedAt, now)),
-      ),
-    [fetched, state.openNow, state.newOnly, now],
+      filterClock === null
+        ? (fetched ?? [])
+        : (fetched ?? []).filter(
+            (s) =>
+              (!state.openNow || isOpenAt(s.hours, filterClock)) &&
+              (!state.newOnly || isNewShop(s.publishedAt, filterClock)),
+          ),
+    [fetched, state.openNow, state.newOnly, filterClock],
   );
 
   // List: shops in the visible map area (or every match when searching), nearest first.

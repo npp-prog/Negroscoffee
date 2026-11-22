@@ -5,6 +5,20 @@ import { shopPhotoUrl } from "@/lib/db/shops";
 import { adminShopSchema } from "@/lib/validation";
 
 describe("safeNext", () => {
+  it("blocks control-character and backslash tricks", () => {
+    for (const bad of [
+      "/\t/evil.com",
+      "/\n/evil.com",
+      "/\\evil.com",
+      "/\r\n//evil.com",
+      "//evil.com",
+      "https://evil.com",
+    ]) {
+      expect(safeNext(bad)).toBe("/admin");
+    }
+    expect(safeNext("/shop/x?y=1#reviews")).toBe("/shop/x?y=1#reviews");
+  });
+
   it("allows same-site paths and blocks open redirects", () => {
     expect(safeNext("/admin/shops")).toBe("/admin/shops");
     expect(safeNext("https://evil.example")).toBe("/admin");
@@ -19,7 +33,9 @@ describe("shopPhotoUrl", () => {
     expect(shopPhotoUrl("https://x.supabase.co/", "abc/1 2.jpg")).toBe(
       "https://x.supabase.co/storage/v1/object/public/shop-photos/abc/1%202.jpg",
     );
-    expect(shopPhotoUrl("https://x.supabase.co", "abc/1.jpg", { width: 400, height: 300 })).toBe(
+    expect(
+      shopPhotoUrl("https://x.supabase.co", "abc/1.jpg", { width: 400, height: 300 }, true),
+    ).toBe(
       "https://x.supabase.co/storage/v1/render/image/public/shop-photos/abc/1.jpg?resize=cover&width=400&height=300",
     );
   });

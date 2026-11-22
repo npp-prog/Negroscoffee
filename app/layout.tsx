@@ -13,7 +13,8 @@ const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
   display: "swap",
-  axes: ["SOFT", "opsz"],
+  // Only the default axes (the SOFT/opsz file was 120 KB) and no preload: headings swap in.
+  preload: false,
 });
 
 const site = siteUrl();

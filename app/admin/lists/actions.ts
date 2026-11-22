@@ -76,8 +76,9 @@ export async function saveListAction(id: string, input: ListInput): Promise<Resu
     return { ok: false, error: "Add at least one shop before publishing." };
   try {
     const { db } = await requireAdmin();
-    const { oldSlug, slug } = await updateList(db, id, v);
+    // Shops first, then title/status: a list never goes live before its shops are saved.
     await setListItems(db, id, v.items);
+    const { oldSlug, slug } = await updateList(db, id, v);
     expireLists([oldSlug, slug]);
     return { ok: true, message: v.status === "published" ? "Saved and live" : "Draft saved" };
   } catch (err) {

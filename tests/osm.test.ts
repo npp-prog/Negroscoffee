@@ -42,12 +42,19 @@ describe("parseOpeningHours", () => {
   it("handles 24/7, bare times, wrap-around days and past-midnight closes", () => {
     expect(parseOpeningHours("24/7")!.wed).toEqual([{ open: "00:00", close: "24:00" }]);
     expect(Object.keys(parseOpeningHours("7:00-21:00")!)).toHaveLength(7);
-    expect(Object.keys(parseOpeningHours("Sa-Mo 09:00-17:00")!).sort()).toEqual([
-      "mon",
-      "sat",
-      "sun",
-    ]);
+    const wrap = parseOpeningHours("Sa-Mo 09:00-17:00")!;
+    expect(wrap.sat).toHaveLength(1);
+    expect(wrap.sun).toHaveLength(1);
+    expect(wrap.mon).toHaveLength(1);
+    expect(wrap.tue).toEqual([]);
     expect(parseOpeningHours("Fr 18:00-26:00")!.fri).toEqual([{ open: "18:00", close: "02:00" }]);
+  });
+
+  it("treats days no rule mentions as closed, like OSM", () => {
+    const h = parseOpeningHours("Mo-Fr 08:00-17:00")!;
+    expect(h.sat).toEqual([]);
+    expect(h.sun).toEqual([]);
+    expect(Object.keys(h)).toHaveLength(7);
   });
 
   it("refuses to guess on syntax it doesn't understand", () => {

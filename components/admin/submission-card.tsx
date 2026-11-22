@@ -123,6 +123,7 @@ export function SubmissionCard({
           dateTime={s.createdAt}
         >
           {new Date(s.createdAt).toLocaleString("en-PH", {
+            timeZone: "Asia/Manila",
             month: "short",
             day: "numeric",
             hour: "numeric",

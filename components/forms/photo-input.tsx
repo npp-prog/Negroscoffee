@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 const MAX_EDGE = 1600;
 
 /** Downscale to MAX_EDGE px JPEG in the browser (saves mobile data; keeps uploads small). */
-async function shrink(file: File): Promise<File> {
+export async function shrink(file: File): Promise<File> {
   if (!file.type.startsWith("image/") || typeof createImageBitmap !== "function") return file;
   try {
     const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });

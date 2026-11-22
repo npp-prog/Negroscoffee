@@ -5,6 +5,7 @@
 import { z } from "zod";
 
 import { SHOP_TYPES } from "./categories";
+import { parseLocationInput } from "./location";
 
 const trimmed = (max: number) => z.string().trim().max(max, `Keep it under ${max} characters`);
 const optionalText = (max: number) =>
@@ -31,28 +32,6 @@ const optionalPrice = z
   .transform((v) => (v === "" || v == null ? undefined : Math.round(v)));
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-
-/** "10.6765, 122.9509" or a Google/OSM/Apple maps link containing coordinates. */
-export function parseLocationInput(text: string | undefined): { lat: number; lng: number } | null {
-  if (!text) return null;
-  const decoded = decodeURIComponent(text);
-  const patterns = [
-    /@(-?\d{1,2}\.\d+),\s*(-?\d{1,3}\.\d+)/, // google.com/maps/@lat,lng,17z
-    /[?&](?:q|ll|query|destination|mlat)=(-?\d{1,2}\.\d+),\s*(-?\d{1,3}\.\d+)/, // ?q=lat,lng
-    /!3d(-?\d{1,2}\.\d+)!4d(-?\d{1,3}\.\d+)/, // google place data
-    /^\s*(-?\d{1,2}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)\s*$/, // plain "lat, lng"
-  ];
-  for (const re of patterns) {
-    const m = decoded.match(re);
-    if (m) {
-      const lat = Number(m[1]);
-      const lng = Number(m[2]);
-      // Rough Negros + surroundings guard.
-      if (lat > 8.5 && lat < 11.6 && lng > 121.8 && lng < 124.2) return { lat, lng };
-    }
-  }
-  return null;
-}
 
 const locationField = optionalText(500).refine(
   (v) => !v || parseLocationInput(v) !== null,
@@ -286,3 +265,5 @@ export const ownerShopSchema = adminShopSchema.pick({
   instagramUrl: true,
 });
 export type OwnerShopInput = z.infer<typeof ownerShopSchema>;
+
+export { parseLocationInput };

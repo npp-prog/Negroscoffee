@@ -13,9 +13,10 @@ export function textValues(form: FormData): Record<string, string> {
 /** Honeypot + minimum fill time. Returns an error state when the post looks automated. */
 export function botCheck(form: FormData): FormState | null {
   const honeypot = form.get("website_hp");
-  const started = Number(form.get("startedAt"));
-  const tooFast =
-    Number.isFinite(started) && started > 0 && Date.now() - started < MIN_FILL_SECONDS * 1000;
+  // elapsedMs is kept up to date by the browser while the form is open; missing means a script.
+  const raw = form.get("elapsedMs");
+  const elapsed = typeof raw === "string" && raw !== "" ? Number(raw) : NaN;
+  const tooFast = !Number.isFinite(elapsed) || elapsed < MIN_FILL_SECONDS * 1000;
   if ((typeof honeypot === "string" && honeypot !== "") || tooFast) {
     return {
       status: "error",
@@ -46,6 +47,13 @@ export async function visitor() {
 }
 
 export function serverError(err: unknown, values: Record<string, string>): FormState {
+  if (err instanceof Error && err.message.includes("submission_limit")) {
+    return {
+      status: "error",
+      values,
+      errors: { form: "We've received a lot from you recently. Please try again in an hour." },
+    };
+  }
   console.error("[submission]", err);
   return {
     status: "error",

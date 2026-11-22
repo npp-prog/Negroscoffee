@@ -33,39 +33,15 @@ export type TopShop = {
 
 /** Admin: most viewed shops over the last `days` days (Philippine dates, today included). */
 export async function listTopShops(db: Db, days = 7, limit = 5): Promise<TopShop[]> {
-  const fromDay = new Date(Date.now() - (days - 1) * 86_400_000).toLocaleDateString("en-CA", {
-    timeZone: "Asia/Manila",
-  });
-  const rows = unwrap<
-    {
-      shop_id: string;
-      views: number;
-      map_opens: number;
-      directions: number;
-      shops: { name: string; slug: string } | null;
-    }[]
-  >(
-    await db
-      .from("shop_daily_stats")
-      .select("shop_id, views, map_opens, directions, shops(name, slug)")
-      .gte("day", fromDay),
-  );
-  const by = new Map<string, TopShop>();
-  for (const r of rows) {
-    const t = by.get(r.shop_id) ?? {
-      shopId: r.shop_id,
-      name: r.shops?.name ?? "Unknown",
-      slug: r.shops?.slug ?? "",
-      views: 0,
-      directions: 0,
-    };
-    t.views += r.views + r.map_opens;
-    t.directions += r.directions;
-    by.set(r.shop_id, t);
-  }
-  return [...by.values()]
-    .sort((a, b) => b.views - a.views || b.directions - a.directions)
-    .slice(0, limit);
+  const { data, error } = await db.rpc("top_shops", { p_days: days, p_limit: limit });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({
+    shopId: r.shop_id,
+    name: r.name,
+    slug: r.slug,
+    views: Number(r.views),
+    directions: Number(r.directions),
+  }));
 }
 
 export async function getShopRating(

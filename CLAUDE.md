@@ -52,7 +52,9 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   visitor's own Supabase client (RLS applies, no read-back since anon can't SELECT submissions).
   Photos are resized in the browser and stored privately in `submission-proofs` (`claims/`,
   `suggestions/`); server caps 3 MB, `serverActions.bodySizeLimit` is 4 MB. Spam guard = honeypot
-  `website_hp` + minimum fill time (`startedAt`, set after mount). Admins review in milestone 7.
+  `website_hp` + minimum fill time (`elapsedMs`, measured in the browser with `performance.now()`
+  so device clocks don't matter; missing = bot). DB trigger `submissions_rate_limit`: 10/hour per
+  signed-in user, 30/hour for all anonymous visitors together (friendly error via `serverError`). Admins review in milestone 7.
 - Auth: `/login` (magic link + Google via `signInWithOtp` / `signInWithOAuth`, PKCE) →
   `/auth/callback` exchanges the code; `proxy.ts` refreshes the session on `/admin` and `/login`.
   `getServerSupabase()` calls `await connection()` first (session code reads the clock, which
@@ -113,7 +115,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   `/admin/lists` + editor (`components/admin/list-editor.tsx`); actions call `expireLists()`.
   Publishing an empty list is refused; empty lists are hidden from `/lists`.
 - `/admin/review`: one-card-at-a-time draft review (type, latte price or tier, Publish / "Not a
-  coffee shop" (hidden) / Skip), ordered by province → town → name. `quickReviewShop()` refuses to
+  coffee shop" (hidden) / Skip), ordered by province, grouped by town, then name. `quickReviewShop()` refuses to
   publish without type, tier/price and province.
 - PWA: `app/manifest.ts`, icons in `public/icons/` (rendered from the logo mark), `public/sw.js`
   (offline fallback `/offline` + cache-first `/_next/static` and icons; never caches pages, admin,
@@ -121,7 +123,18 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   `VERSION` in `sw.js` when changing caching. SEO: `app/sitemap.ts` (published shops, cached with
   tag `shops`), `app/robots.ts` (disallows /admin, /owner, /saved, /login, /auth/, /claim/).
 - Photo URLs: build with `shopPhotoUrl(SUPABASE_URL, path, size?)`; never create a Supabase client
-  during render just for URLs.
+  during render just for URLs. Sizes use Supabase render/image only when
+  `NEXT_PUBLIC_SUPABASE_IMAGE_TRANSFORMS=on` (Pro plan); otherwise the original file. Admin/owner
+  uploads are shrunk in the browser (`shrink()` from `photo-input.tsx`) and sent one per request
+  (Server Action body limit 4 MB; server cap 3.5 MB).
+- Security hardening (migration `20261122000008`): guard also locks `rating_avg/rating_count/
+published_at`; authors can't delete hidden reviews; `shop_photos_guard` (non-admins can't set
+  credit/contributed_by, path must start with `<shop_id>/`); `replace_menu` / `replace_list_items`
+  (atomic, security invoker); `top_shops(days, limit)` for "Most viewed". `safeNext()` rejects
+  control characters/backslashes and re-checks the origin.
+- Map page bundle: public reads there use `getPublicRest()` (`lib/supabase/public-rest.ts`,
+  postgrest-js only) instead of supabase-js; `lib/env.ts` has no zod. `getViewer()` is wrapped
+  in React `cache()`. Recommended Vercel function region: Singapore (`sin1`).
 - `supabase/seed.sql` includes 10 fictional demo shops (slugs `demo-*`). Remove before launch:
   dashboard "Remove demo shops" (`removeDemoShopsAction`) or
   `delete from public.shops where slug like 'demo-%';`
@@ -185,7 +198,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 ## Database notes
 
 - Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets → explicit
-  API grants → owner editing → reviews & saved shops → published_at → email prefs → visitor photos → shop insights → coffee lists). The grants file restores Supabase's standard table privileges for projects created
+  API grants → owner editing → reviews & saved shops → published_at → email prefs → visitor photos → shop insights → coffee lists → security hardening). The grants file restores Supabase's standard table privileges for projects created
   with "automatically expose new tables" off; RLS policies still decide row access.
 - Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
   `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.

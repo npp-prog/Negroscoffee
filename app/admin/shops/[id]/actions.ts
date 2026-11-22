@@ -24,7 +24,8 @@ import { adminShopSchema, fieldErrors } from "@/lib/validation";
 
 const UUID = /^[0-9a-f-]{36}$/i;
 const PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
-const PHOTO_MAX = 8 * 1024 * 1024;
+// Server Actions accept 4 MB bodies (Vercel ~4.5 MB); photos are shrunk in the browser first.
+const PHOTO_MAX = 3.5 * 1024 * 1024;
 
 function values(form: FormData) {
   const out: Record<string, string> = {};
@@ -129,7 +130,8 @@ export async function uploadPhotosAction(shopId: string, form: FormData): Promis
     const files = form.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
     if (!files.length) return { ok: false, error: "Choose at least one photo." };
     const bad = files.find((f) => !PHOTO_TYPES.includes(f.type) || f.size > PHOTO_MAX);
-    if (bad) return { ok: false, error: `${bad.name}: use JPG, PNG, WebP or AVIF under 8 MB.` };
+    if (bad)
+      return { ok: false, error: `${bad.name}: use a JPG, PNG, WebP or AVIF photo under 3.5 MB.` };
     const { db, userId, isAdmin } = await requireShopEditor(shopId);
     const shop = await getAdminShop(db, shopId);
     if (!shop) return { ok: false, error: "Shop not found" };

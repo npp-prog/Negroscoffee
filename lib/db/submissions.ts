@@ -1,5 +1,5 @@
 import type { ClaimInput, CorrectionInput, SuggestShopInput } from "../validation";
-import { parseLocationInput } from "../validation";
+import { parseLocationInput } from "../location";
 import { unwrap, type Db } from "./client";
 import type { Json } from "./types";
 

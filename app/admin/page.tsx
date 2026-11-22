@@ -10,7 +10,7 @@ import { siteUrl } from "@/lib/site";
 import { getServerSupabase } from "@/lib/supabase/server";
 import {
   countPendingPhotos,
-  listDemoShopSlugs,
+  listDemoShops,
   listTopShops,
   type TopShop,
   describeShopEdit,
@@ -50,16 +50,17 @@ function Stat({
 
 export default async function AdminDashboard() {
   const db = await getServerSupabase();
-  const [counts, pending, edits, photoCount, demoSlugs, topShops] = await Promise.all([
+  const [counts, pending, edits, photoCount, demoShops, topShops] = await Promise.all([
     getAdminCounts(db),
     listSubmissions(db, { status: "pending", limit: 6 }),
     listRecentShopEdits(db, 8).catch(() => []),
     countPendingPhotos(db).catch(() => 0),
-    listDemoShopSlugs(db).catch(() => [] as string[]),
+    listDemoShops(db).catch(() => [] as { slug: string; status: string }[]),
     listTopShops(db, 7, 5).catch(() => [] as TopShop[]),
   ]);
   const launch = launchChecklist({
-    demoShops: demoSlugs.length,
+    demoShops: demoShops.length,
+    publishedDemoShops: demoShops.filter((d) => d.status === "published").length,
     publishedShops: counts.shops.published,
     hasMapKey: !!process.env.NEXT_PUBLIC_MAPTILER_KEY,
     hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
@@ -175,6 +176,7 @@ export default async function AdminDashboard() {
                     dateTime={s.createdAt}
                   >
                     {new Date(s.createdAt).toLocaleDateString("en-PH", {
+                      timeZone: "Asia/Manila",
                       month: "short",
                       day: "numeric",
                     })}

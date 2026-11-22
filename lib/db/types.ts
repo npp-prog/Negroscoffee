@@ -672,9 +672,21 @@ export type Database = {
         Returns: Database["public"]["Enums"]["user_role"];
       };
       is_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
+      top_shops: {
+        Args: { p_days?: number; p_limit?: number };
+        Returns: {
+          shop_id: string;
+          name: string;
+          slug: string;
+          views: number;
+          directions: number;
+        }[];
+      };
       track_shop_event: { Args: { p_slug: string; p_kind: string }; Returns: undefined };
       owns_shop: { Args: { p_shop_id: string }; Returns: boolean };
       price_tier_for: { Args: { latte_price: number }; Returns: number };
+      replace_list_items: { Args: { p_list_id: string; p_items: Json }; Returns: undefined };
+      replace_menu: { Args: { p_shop_id: string; p_items: Json }; Returns: undefined };
       shop_insights: { Args: { p_shop_id: string; p_days?: number }; Returns: Json };
       shops_in_bbox: {
         Args: {

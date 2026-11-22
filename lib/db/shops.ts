@@ -224,16 +224,19 @@ export async function listPublishedSlugs(db: Db) {
 
 /**
  * Public URL of a photo in the `shop-photos` bucket, built from the project URL alone (no client,
- * so it is safe to call while rendering). With a size it uses Supabase image transforms.
+ * so it is safe to call while rendering). With a size, it uses Supabase image transforms when
+ * they're switched on (`NEXT_PUBLIC_SUPABASE_IMAGE_TRANSFORMS=on`; a Pro-plan feature that fails
+ * on the free plan), otherwise the original file (uploads are already shrunk in the browser).
  */
 export function shopPhotoUrl(
   supabaseUrl: string,
   storagePath: string,
   opts?: { width?: number; height?: number },
+  transforms = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_TRANSFORMS === "on",
 ) {
   const base = supabaseUrl.replace(/\/+$/, "");
   const path = storagePath.split("/").map(encodeURIComponent).join("/");
-  if (!opts) return `${base}/storage/v1/object/public/shop-photos/${path}`;
+  if (!opts || !transforms) return `${base}/storage/v1/object/public/shop-photos/${path}`;
   const qs = new URLSearchParams({ resize: "cover" });
   if (opts.width) qs.set("width", String(opts.width));
   if (opts.height) qs.set("height", String(opts.height));

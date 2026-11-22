@@ -277,21 +277,11 @@ export async function setListItems(
   listId: string,
   items: { shopId: string; note: string | null }[],
 ): Promise<void> {
-  unwrap(await db.from("shop_list_items").delete().eq("list_id", listId).select("shop_id"));
-  if (!items.length) return;
-  unwrap(
-    await db
-      .from("shop_list_items")
-      .insert(
-        items.map((i, position) => ({
-          list_id: listId,
-          shop_id: i.shopId,
-          position,
-          note: i.note,
-        })),
-      )
-      .select("shop_id"),
-  );
+  const { error } = await db.rpc("replace_list_items", {
+    p_list_id: listId,
+    p_items: items.map((i) => ({ shop_id: i.shopId, note: i.note ?? "" })),
+  });
+  if (error) throw new Error(error.message);
 }
 
 export async function deleteList(db: Db, id: string): Promise<string | null> {

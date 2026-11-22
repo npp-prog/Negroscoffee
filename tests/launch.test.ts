@@ -4,6 +4,7 @@ import { launchChecklist, MIN_PUBLISHED } from "@/lib/launch";
 
 const base = {
   demoShops: 10,
+  publishedDemoShops: 10,
   publishedShops: 15,
   hasMapKey: true,
   hasServiceKey: false,
@@ -26,6 +27,7 @@ describe("launchChecklist", () => {
     const items = launchChecklist({
       ...base,
       demoShops: 0,
+      publishedDemoShops: 0,
       publishedShops: MIN_PUBLISHED,
       hasServiceKey: true,
       hasContactEmail: true,
@@ -33,6 +35,11 @@ describe("launchChecklist", () => {
       siteUrl: "https://kapenegros.com",
     });
     expect(items.every((i) => i.done)).toBe(true);
+  });
+
+  it("only subtracts published demo shops", () => {
+    const c = byKey(launchChecklist({ ...base, publishedDemoShops: 0, publishedShops: 20 }));
+    expect(c.shops.done).toBe(true);
   });
 
   it("treats vercel.app and localhost as no custom domain", () => {

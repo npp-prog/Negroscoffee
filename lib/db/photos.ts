@@ -192,80 +192,88 @@ export async function listPendingPhotos(db: Db, limit = 24): Promise<PendingPhot
   }));
 }
 
-async function pendingRow(db: Db, id: string): Promise<SubRow | null> {
-  return unwrap<SubRow | null>(
-    await db
-      .from("photo_submissions")
-      .select(SUB_COLS)
-      .eq("id", id)
-      .eq("status", "pending")
-      .maybeSingle(),
-  );
-}
-
 /**
  * Publish a pending photo: copy it into shop-photos (added last, so the cover doesn't change),
  * credit the contributor, mark approved and delete the private copy. Returns the shop slug, or
  * null if it was already reviewed.
  */
-export async function approvePhoto(db: Db, id: string, adminId: string): Promise<string | null> {
-  const sub = await pendingRow(db, id);
-  if (!sub) return null;
-  const file = await db.storage.from(PRIVATE).download(sub.storage_path);
-  if (file.error || !file.data) throw new Error(file.error?.message ?? "Photo file is missing");
-  const ext = sub.storage_path.split(".").pop() ?? "jpg";
-  const type =
-    file.data.type || Object.entries(EXT).find(([, e]) => e === ext)?.[0] || "image/jpeg";
-  const path = `${sub.shop_id}/${crypto.randomUUID()}.${ext}`;
-  const up = await db.storage.from(PUBLIC).upload(path, file.data, { contentType: type });
-  if (up.error) throw new Error(up.error.message);
-
-  const name = (await displayNames(db, [sub.user_id])).get(sub.user_id);
-  const existing = unwrap(
-    await db.from("shop_photos").select("sort_order").eq("shop_id", sub.shop_id),
-  );
-  const next = existing.reduce((m, r) => Math.max(m, r.sort_order + 1), 0);
-  const photo = unwrap<{ id: string }>(
-    await db
-      .from("shop_photos")
-      .insert({
-        shop_id: sub.shop_id,
-        storage_path: path,
-        caption: sub.caption,
-        sort_order: next,
-        credit: (name || "Coffee lover").slice(0, 80),
-        contributed_by: sub.user_id,
-      })
-      .select("id")
-      .single(),
-  );
-  unwrap(
+/**
+ * Claim a pending submission for review (pending → status) in one conditional update, so two
+ * admins (or a double tap) can't both act on it and a visitor can't withdraw it mid-review.
+ */
+async function claim(
+  db: Db,
+  id: string,
+  adminId: string,
+  status: "approved" | "rejected",
+): Promise<SubRow | null> {
+  const rows = unwrap<SubRow[]>(
     await db
       .from("photo_submissions")
-      .update({
-        status: "approved",
-        photo_id: photo.id,
-        reviewed_by: adminId,
-        reviewed_at: new Date().toISOString(),
-      })
+      .update({ status, reviewed_by: adminId, reviewed_at: new Date().toISOString() })
       .eq("id", id)
-      .select("id"),
+      .eq("status", "pending")
+      .select(SUB_COLS),
   );
+  return rows[0] ?? null;
+}
+
+export async function approvePhoto(db: Db, id: string, adminId: string): Promise<string | null> {
+  const sub = await claim(db, id, adminId, "approved");
+  if (!sub) return null;
+  let path: string | null = null;
+  try {
+    const file = await db.storage.from(PRIVATE).download(sub.storage_path);
+    if (file.error || !file.data) throw new Error(file.error?.message ?? "Photo file is missing");
+    const ext = sub.storage_path.split(".").pop() ?? "jpg";
+    const type =
+      file.data.type || Object.entries(EXT).find(([, e]) => e === ext)?.[0] || "image/jpeg";
+    path = `${sub.shop_id}/${crypto.randomUUID()}.${ext}`;
+    const up = await db.storage.from(PUBLIC).upload(path, file.data, { contentType: type });
+    if (up.error) {
+      path = null;
+      throw new Error(up.error.message);
+    }
+
+    const name = (await displayNames(db, [sub.user_id])).get(sub.user_id);
+    const existing = unwrap(
+      await db.from("shop_photos").select("sort_order").eq("shop_id", sub.shop_id),
+    );
+    const next = existing.reduce((m, r) => Math.max(m, r.sort_order + 1), 0);
+    const photo = unwrap<{ id: string }>(
+      await db
+        .from("shop_photos")
+        .insert({
+          shop_id: sub.shop_id,
+          storage_path: path,
+          caption: sub.caption,
+          sort_order: next,
+          credit: (name || "Coffee lover").slice(0, 80),
+          contributed_by: sub.user_id,
+        })
+        .select("id")
+        .single(),
+    );
+    unwrap(
+      await db.from("photo_submissions").update({ photo_id: photo.id }).eq("id", id).select("id"),
+    );
+  } catch (err) {
+    // Put it back in the queue and drop any half-copied file.
+    if (path) await db.storage.from(PUBLIC).remove([path]);
+    await db
+      .from("photo_submissions")
+      .update({ status: "pending", reviewed_by: null, reviewed_at: null })
+      .eq("id", id);
+    throw err;
+  }
   await db.storage.from(PRIVATE).remove([sub.storage_path]);
   return sub.shops?.slug ?? null;
 }
 
 /** Decline a pending photo and delete the file (the row stays so the visitor sees the outcome). */
 export async function rejectPhoto(db: Db, id: string, adminId: string): Promise<boolean> {
-  const sub = await pendingRow(db, id);
+  const sub = await claim(db, id, adminId, "rejected");
   if (!sub) return false;
-  unwrap(
-    await db
-      .from("photo_submissions")
-      .update({ status: "rejected", reviewed_by: adminId, reviewed_at: new Date().toISOString() })
-      .eq("id", id)
-      .select("id"),
-  );
   await db.storage.from(PRIVATE).remove([sub.storage_path]);
   return true;
 }

@@ -28,18 +28,19 @@ Storage), TanStack Query and Zod. See [PLAN.md](./PLAN.md) for the milestones an
 
 Environment variables (see [`.env.example`](./.env.example)):
 
-| Variable                        | Required | Notes                                                                |
-| ------------------------------- | -------- | -------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | `https://<project-ref>.supabase.co`                                  |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | The public anon / publishable key                                    |
-| `NEXT_PUBLIC_MAPTILER_KEY`      | yes      | Without it the app works but shows a placeholder instead of the map  |
-| `NEXT_PUBLIC_SITE_URL`          | no       | Your public URL; defaults to Vercel's production URL                 |
-| `SUPABASE_SERVICE_ROLE_KEY`     | import   | OpenStreetMap import and email lookups. Secret: never in the browser |
-| `NEXT_PUBLIC_CONTACT_EMAIL`     | no       | Contact address shown on `/privacy` (any inbox you check)            |
-| `RESEND_API_KEY`                | no       | Turns on email notifications (section 3)                             |
-| `EMAIL_FROM`                    | no       | Sender, e.g. `Kape Negros <hello@yourdomain.com>` (verified domain)  |
-| `NOTIFY_ADMIN_EMAILS`           | no       | Comma-separated admin inboxes; default: admins with emails on        |
-| `EMAIL_REPLY_TO`                | no       | Reply address; default: first `NOTIFY_ADMIN_EMAILS` entry            |
+| Variable                                | Required | Notes                                                                |
+| --------------------------------------- | -------- | -------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`              | yes      | `https://<project-ref>.supabase.co`                                  |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`         | yes      | The public anon / publishable key                                    |
+| `NEXT_PUBLIC_MAPTILER_KEY`              | yes      | Without it the app works but shows a placeholder instead of the map  |
+| `NEXT_PUBLIC_SITE_URL`                  | no       | Your public URL; defaults to Vercel's production URL                 |
+| `SUPABASE_SERVICE_ROLE_KEY`             | import   | OpenStreetMap import and email lookups. Secret: never in the browser |
+| `NEXT_PUBLIC_SUPABASE_IMAGE_TRANSFORMS` | no       | `on` only on a Supabase plan with Image Transformations (Pro)        |
+| `NEXT_PUBLIC_CONTACT_EMAIL`             | no       | Contact address shown on `/privacy` (any inbox you check)            |
+| `RESEND_API_KEY`                        | no       | Turns on email notifications (section 3)                             |
+| `EMAIL_FROM`                            | no       | Sender, e.g. `Kape Negros <hello@yourdomain.com>` (verified domain)  |
+| `NOTIFY_ADMIN_EMAILS`                   | no       | Comma-separated admin inboxes; default: admins with emails on        |
+| `EMAIL_REPLY_TO`                        | no       | Reply address; default: first `NOTIFY_ADMIN_EMAILS` entry            |
 
 `NEXT_PUBLIC_*` values are baked in at build time: after changing them in Vercel, **redeploy**.
 
@@ -59,6 +60,8 @@ Environment variables (see [`.env.example`](./.env.example)):
    9. `20261122000005_visitor_photos.sql` — visitor photo uploads (private until approved)
    10. `20261122000006_shop_insights.sql` — anonymous daily visit counters for owner insights
    11. `20261122000007_shop_lists.sql` — curated coffee lists
+   12. `20261122000008_security_hardening.sql` — locks ratings/photo credits, spam limits,
+       atomic menu/list saves, indexes
 3. Run [`supabase/seed.sql`](./supabase/seed.sql): 57 Negros cities/municipalities plus 10
    fictional demo shops (slugs `demo-*`). Remove the demos before launch:
 

@@ -6,7 +6,7 @@ import { ClipboardPaste } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
-import { parseLocationInput } from "@/lib/validation";
+import { parseLocationInput } from "@/lib/location";
 
 const LocationMap = dynamic(() => import("@/components/admin/location-map"), {
   ssr: false,

@@ -330,24 +330,13 @@ export async function deleteShop(db: Db, id: string) {
 export type MenuEdit = { name: string; price: number; category: string | null };
 
 /** Replace the whole menu (simple and atomic enough for a short list). */
+/** Replace a shop's menu in one transaction (order = array order). */
 export async function replaceMenu(db: Db, shopId: string, items: MenuEdit[]) {
-  unwrap(await db.from("menu_items").delete().eq("shop_id", shopId).select("id"));
-  if (items.length) {
-    unwrap(
-      await db
-        .from("menu_items")
-        .insert(
-          items.map((m, i) => ({
-            shop_id: shopId,
-            name: m.name,
-            price: m.price,
-            category: m.category,
-            sort_order: i,
-          })),
-        )
-        .select("id"),
-    );
-  }
+  const { error } = await db.rpc("replace_menu", {
+    p_shop_id: shopId,
+    p_items: items.map((m) => ({ name: m.name, price: m.price, category: m.category ?? "" })),
+  });
+  if (error) throw new Error(error.message);
 }
 
 // --- photos ---------------------------------------------------------------------------------
@@ -672,10 +661,9 @@ export async function updateMyNotifyEmail(db: Db, userId: string, on: boolean) {
 
 // --- launch ---------------------------------------------------------------------------------
 
-/** Slugs of the fictional demo shops from supabase/seed.sql (slug prefix `demo-`). */
-export async function listDemoShopSlugs(db: Db): Promise<string[]> {
-  const rows = unwrap(await db.from("shops").select("slug").like("slug", "demo-%"));
-  return rows.map((r) => r.slug);
+/** The fictional demo shops from supabase/seed.sql (slug prefix `demo-`). */
+export async function listDemoShops(db: Db): Promise<{ slug: string; status: string }[]> {
+  return unwrap(await db.from("shops").select("slug, status").like("slug", "demo-%"));
 }
 
 /** Delete the demo shops (and, by cascade, their photos rows, menus and reviews). */

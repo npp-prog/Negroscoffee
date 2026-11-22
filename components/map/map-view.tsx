@@ -180,7 +180,13 @@ export default function MapView({
         setFailure(status === 401 || status === 403 ? "key" : "network");
       }}
       onMoveEnd={handleMove}
-      onClick={onBackgroundClick}
+      onClick={(e) => {
+        // MapLibre sees clicks on HTML markers too (they bubble through its container natively,
+        // before React's stopPropagation). Only a tap on the bare map clears the selection.
+        const target = e.originalEvent?.target as Element | null;
+        if (target?.closest?.(".maplibregl-marker")) return;
+        onBackgroundClick();
+      }}
       style={{ position: "absolute", inset: 0 }}
       cooperativeGestures={false}
     >

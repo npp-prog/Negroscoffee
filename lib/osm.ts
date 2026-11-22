@@ -129,7 +129,10 @@ export function parseOpeningHours(value: string | undefined): WeeklyHours | null
     if (!ranges) return null;
     for (const d of days) hours[d] = ranges; // later rules override earlier ones, as in OSM
   }
-  return Object.keys(hours).length ? hours : null;
+  if (!Object.keys(hours).length) return null;
+  // In OSM, days no rule mentions are closed ("Mo-Fr 08:00-17:00" = closed on weekends).
+  for (const d of WEEKDAYS) hours[d] ??= [];
+  return hours;
 }
 
 // --- classification -------------------------------------------------------------------------

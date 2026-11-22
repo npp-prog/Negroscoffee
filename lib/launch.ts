@@ -3,6 +3,8 @@
  */
 export type LaunchInput = {
   demoShops: number;
+  /** Demo shops that are published (only these inflate the published count). */
+  publishedDemoShops: number;
   publishedShops: number;
   hasMapKey: boolean;
   hasServiceKey: boolean;
@@ -45,8 +47,8 @@ export function launchChecklist(i: LaunchInput): LaunchItem[] {
     {
       key: "shops",
       label: `At least ${MIN_PUBLISHED} real shops published`,
-      done: i.publishedShops - i.demoShops >= MIN_PUBLISHED,
-      hint: `${Math.max(0, i.publishedShops - i.demoShops)} published so far. Review imported drafts to add more.`,
+      done: i.publishedShops - i.publishedDemoShops >= MIN_PUBLISHED,
+      hint: `${Math.max(0, i.publishedShops - i.publishedDemoShops)} published so far. Review imported drafts to add more.`,
       href: "/admin/review",
     },
     {

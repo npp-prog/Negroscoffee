@@ -163,6 +163,7 @@ export function ShopsTable({ rows }: { rows: AdminShopRow[] }) {
                 </td>
                 <td className="p-3 text-[12px] text-muted-foreground tabular">
                   {new Date(r.updatedAt).toLocaleDateString("en-PH", {
+                    timeZone: "Asia/Manila",
                     month: "short",
                     day: "numeric",
                     year: "numeric",

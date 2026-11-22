@@ -10,6 +10,10 @@ import {
 } from "@/lib/validation";
 
 describe("parseLocationInput", () => {
+  it("doesn't throw on malformed links", () => {
+    expect(parseLocationInput("https://maps.example/%E0%A4%A?q=1")).toBeNull();
+  });
+
   it("reads coordinates from common map links and plain text", () => {
     expect(parseLocationInput("10.6765, 122.9509")).toEqual({ lat: 10.6765, lng: 122.9509 });
     expect(parseLocationInput("https://www.google.com/maps/@10.6765,122.9509,17z")).toEqual({

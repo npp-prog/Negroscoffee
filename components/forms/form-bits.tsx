@@ -10,16 +10,22 @@ import { motion, useReducedMotion } from "motion/react";
 import { CupIllustration } from "@/components/brand/cup-illustration";
 import { Button } from "@/components/ui/button";
 
-/** Honeypot + start time. Hidden from people and assistive tech. */
+/** Honeypot + time spent on the form. Hidden from people and assistive tech. */
 export function SpamGuard() {
-  // Set after mount: the page is prerendered, so the time must come from the browser.
-  const started = useRef<HTMLInputElement>(null);
+  // Measured in the browser with a monotonic clock, so a wrong device clock doesn't matter.
+  const elapsed = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (started.current) started.current.value = String(Date.now());
+    const t0 = performance.now();
+    const tick = () => {
+      if (elapsed.current) elapsed.current.value = String(Math.round(performance.now() - t0));
+    };
+    tick();
+    const id = window.setInterval(tick, 500);
+    return () => window.clearInterval(id);
   }, []);
   return (
     <>
-      <input ref={started} type="hidden" name="startedAt" defaultValue="" />
+      <input ref={elapsed} type="hidden" name="elapsedMs" defaultValue="" />
       <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
         <label>
           Leave this empty

@@ -10,6 +10,7 @@ import {
   reorderPhotosAction,
   uploadPhotosAction,
 } from "@/app/admin/shops/[id]/actions";
+import { shrink } from "@/components/forms/photo-input";
 import { shopPhotoUrl } from "@/lib/db";
 import { SUPABASE_URL } from "@/lib/env";
 
@@ -32,15 +33,31 @@ export function PhotoManager({
       router.refresh();
     });
 
+  /** Shrink each photo in the browser (phone photos are often 4–8 MB), then upload one by one. */
   function upload(files: FileList | null) {
     if (!files?.length) return;
-    const fd = new FormData();
-    Array.from(files).forEach((f) => fd.append("photos", f));
-    run(
-      () => uploadPhotosAction(shopId, fd),
-      `${files.length} photo${files.length > 1 ? "s" : ""} added`,
-    );
+    const picked = Array.from(files).slice(0, 10);
     if (input.current) input.current.value = "";
+    start(async () => {
+      let added = 0;
+      let lastError: string | null = null;
+      for (const original of picked) {
+        try {
+          const file = await shrink(original);
+          const fd = new FormData();
+          fd.append("photos", file);
+          const res = await uploadPhotosAction(shopId, fd);
+          if (res.ok) added += 1;
+          else lastError = res.error;
+        } catch {
+          lastError = `${original.name}: too large to upload. Try a smaller photo.`;
+        }
+      }
+      if (added) toast.success(`${added} photo${added > 1 ? "s" : ""} added`);
+      if (lastError) toast.error(lastError);
+      if (files.length > 10) toast.message("Only the first 10 photos were added.");
+      router.refresh();
+    });
   }
 
   function move(i: number, by: number) {

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { updateTag } from "next/cache";
+import { cache } from "react";
 
 import { shopTag } from "@/app/shop/[slug]/data";
 import { getProfileRole, ownsShop, type Db } from "@/lib/db";
@@ -10,13 +11,14 @@ import { getServerSupabase } from "@/lib/supabase/server";
 export type AdminContext = { db: Db; userId: string; email: string | null };
 
 /** The signed-in user and their role, or null when signed out. */
-export async function getViewer() {
+/** The signed-in user and role; memoized per request so layout + page share one lookup. */
+export const getViewer = cache(async function getViewer() {
   const db = await getServerSupabase();
   const { data } = await db.auth.getUser();
   if (!data.user) return { db, user: null, role: null } as const;
   const profile = await getProfileRole(db, data.user.id);
   return { db, user: data.user, role: profile?.role ?? "user" } as const;
-}
+});
 
 export class NotAdminError extends Error {
   constructor() {
