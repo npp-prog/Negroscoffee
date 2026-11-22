@@ -67,6 +67,7 @@ export default async function AdminDashboard() {
     hasContactEmail: !!CONTACT_EMAIL,
     hasEmail: !!process.env.RESEND_API_KEY,
     siteUrl: siteUrl(),
+    productionHost: process.env.VERCEL_PROJECT_PRODUCTION_URL ?? null,
   });
   const launchReady = launch.every((i) => i.optional || i.done);
   const pendingTotal = counts.pending.new_shop + counts.pending.claim + counts.pending.correction;

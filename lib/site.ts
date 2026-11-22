@@ -1,6 +1,6 @@
 /**
  * Absolute site URL for metadata, canonical links and JSON-LD. Tolerates a blank value or one
- * without a scheme (e.g. "kapenegros.vercel.app"), then falls back to Vercel's own URLs, then
+ * without a scheme (e.g. "your-project.vercel.app"), then falls back to Vercel's own URLs, then
  * localhost, so a misconfigured env var can never break the build.
  */
 export function siteUrl(): string {

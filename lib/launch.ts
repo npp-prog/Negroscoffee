@@ -11,6 +11,8 @@ export type LaunchInput = {
   hasContactEmail: boolean;
   hasEmail: boolean;
   siteUrl: string;
+  /** Vercel's production host for this project (VERCEL_PROJECT_PRODUCTION_URL), if known. */
+  productionHost?: string | null;
 };
 
 export type LaunchItem = {
@@ -34,7 +36,18 @@ export function launchChecklist(i: LaunchInput): LaunchItem[] {
     }
   })();
   const customDomain = !!host && !host.endsWith(".vercel.app") && host !== "localhost";
+  const prod = (i.productionHost ?? "").replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  // A *.vercel.app address that isn't this project's own is almost certainly a typo/example.
+  const linksOk = !prod || customDomain || host === prod;
   return [
+    {
+      key: "links",
+      label: "Links use the right address",
+      done: linksOk,
+      hint: linksOk
+        ? `QR posters, invites, share links and the sitemap use ${host || "this site"}.`
+        : `Links point to ${host}, but this site is ${prod}. Fix NEXT_PUBLIC_SITE_URL in Vercel (or delete it) and redeploy.`,
+    },
     {
       key: "demo",
       label: "Demo shops removed",

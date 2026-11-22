@@ -76,7 +76,7 @@ Each file runs once; the grants file is safe to re-run. With the Supabase CLI in
 ## 3. Sign-in and your admin account
 
 1. Supabase → **Authentication → URL Configuration**
-   - **Site URL:** your site, e.g. `https://kapenegros.vercel.app`
+   - **Site URL:** your site, e.g. `https://your-project.vercel.app`
    - **Redirect URLs:** `https://<your-domain>/auth/callback` (and
      `http://localhost:3000/auth/callback` for local development)
 2. **Authentication → Sign In / Providers:** Email is on by default (magic link). For Google:
@@ -170,7 +170,7 @@ are logged in Vercel's function logs (`[email]`).
 5. Add your domain(s) to the MapTiler key's **Allowed HTTP Origins**, one per line:
 
    ```
-   kapenegros.vercel.app
+   your-project.vercel.app
    *.vercel.app
    ```
 
