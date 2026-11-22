@@ -13,3 +13,4 @@ export * from "./photos";
 export * from "./account";
 export * from "./insights";
 export * from "./lists";
+export * from "./invites";

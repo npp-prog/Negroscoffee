@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { expireShops, NotAdminError, requireAdmin, requireShopEditor } from "@/lib/admin-server";
 import {
   addShopPhoto,
+  createClaimInvite,
   createShop,
   deleteShop,
   deleteShopPhoto,
@@ -14,12 +15,15 @@ import {
   logShopEdit,
   reorderShopPhotos,
   replaceMenu,
+  revokeClaimInvites,
   slugTaken,
   updateShop,
   unlinkOwner,
   type ShopEdit,
 } from "@/lib/db";
 import type { FormState } from "@/lib/forms";
+import { newInviteToken } from "@/lib/invite-token";
+import { siteUrl } from "@/lib/site";
 import { adminShopSchema, fieldErrors } from "@/lib/validation";
 
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -216,5 +220,37 @@ export async function unlinkOwnerAction(shopId: string): Promise<LinkResult> {
     if (err instanceof NotAdminError) return { ok: false, error: "Admins only" };
     console.error("[admin] unlink owner", err);
     return { ok: false, error: "Couldn't remove the owner. Try again." };
+  }
+}
+
+// --- claim invites ----------------------------------------------------------------------------
+
+type InviteResult = { ok: true; url: string; expiresAt: string } | { ok: false; error: string };
+
+/** Create a one-time owner invite link (replaces any open one). The token is shown only now. */
+export async function createInviteAction(shopId: string): Promise<InviteResult> {
+  try {
+    if (!UUID.test(shopId)) return { ok: false, error: "Bad id" };
+    const { db } = await requireAdmin();
+    const { token, hash } = newInviteToken();
+    const invite = await createClaimInvite(db, shopId, hash);
+    return { ok: true, url: `${siteUrl()}/invite/${token}`, expiresAt: invite.expiresAt };
+  } catch (err) {
+    if (err instanceof NotAdminError) return { ok: false, error: "Admins only" };
+    console.error("[admin] create invite", err);
+    return { ok: false, error: "Couldn't create the invite. Try again." };
+  }
+}
+
+export async function revokeInviteAction(shopId: string): Promise<{ ok: boolean; error?: string }> {
+  try {
+    if (!UUID.test(shopId)) return { ok: false, error: "Bad id" };
+    const { db } = await requireAdmin();
+    await revokeClaimInvites(db, shopId);
+    return { ok: true };
+  } catch (err) {
+    if (err instanceof NotAdminError) return { ok: false, error: "Admins only" };
+    console.error("[admin] revoke invite", err);
+    return { ok: false, error: "Couldn't cancel the invite." };
   }
 }

@@ -114,6 +114,17 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   image), "Featured in" chips on shop pages (`getPublicShop` also tags `lists`). Admin:
   `/admin/lists` + editor (`components/admin/list-editor.tsx`); actions call `expireLists()`.
   Publishing an empty list is refused; empty lists are hidden from `/lists`.
+- Claim invites (migration `20261122000009`): `shop_claim_invites` stores only `token_hash`
+  (SHA-256 hex; `newInviteToken()` in `lib/invite-token.ts`, server-only). Admins create/revoke in
+  the Owner panel (`InvitePanel`, actions in `app/admin/shops/[id]/actions.ts`); a new invite
+  revokes open ones; 14-day expiry. `/invite/[token]` (dynamic, noindex) shows the shop via
+  security-definer `claim_invite_info(token)` (status valid/used/expired/revoked/owned) and
+  `accept_claim_invite(token)` makes the signed-in user owner (+ role owner, verified_at), single
+  use, never takes over an owned shop. Then redirects to `/owner/shops/<id>?welcome=1`. Data:
+  `lib/db/invites.ts`.
+- QR poster: `/poster/[slug]` (prerendered like shop pages, noindex) renders an A4 poster with a
+  server-generated SVG QR (`qrcode` package) to `siteUrl()/shop/<slug>`; print CSS via `@page`.
+  Linked from the owner shop page and the admin Owner panel. robots disallows /invite/ and /poster/.
 - `/admin/review`: one-card-at-a-time draft review (type, latte price or tier, Publish / "Not a
   coffee shop" (hidden) / Skip), ordered by province, grouped by town, then name. `quickReviewShop()` refuses to
   publish without type, tier/price and province.
@@ -121,7 +132,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   (offline fallback `/offline` + cache-first `/_next/static` and icons; never caches pages, admin,
   Supabase or tiles), registered by `components/pwa-register.tsx` in production only. Bump
   `VERSION` in `sw.js` when changing caching. SEO: `app/sitemap.ts` (published shops, cached with
-  tag `shops`), `app/robots.ts` (disallows /admin, /owner, /saved, /login, /auth/, /claim/).
+  tag `shops`), `app/robots.ts` (disallows /admin, /owner, /saved, /login, /auth/, /claim/, /invite/, /poster/).
 - Photo URLs: build with `shopPhotoUrl(SUPABASE_URL, path, size?)`; never create a Supabase client
   during render just for URLs. Sizes use Supabase render/image only when
   `NEXT_PUBLIC_SUPABASE_IMAGE_TRANSFORMS=on` (Pro plan); otherwise the original file. Admin/owner
@@ -198,7 +209,7 @@ published_at`; authors can't delete hidden reviews; `shop_photos_guard` (non-adm
 ## Database notes
 
 - Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets → explicit
-  API grants → owner editing → reviews & saved shops → published_at → email prefs → visitor photos → shop insights → coffee lists → security hardening). The grants file restores Supabase's standard table privileges for projects created
+  API grants → owner editing → reviews & saved shops → published_at → email prefs → visitor photos → shop insights → coffee lists → security hardening → claim invites). The grants file restores Supabase's standard table privileges for projects created
   with "automatically expose new tables" off; RLS policies still decide row access.
 - Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
   `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.

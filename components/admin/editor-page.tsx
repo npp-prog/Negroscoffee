@@ -5,18 +5,20 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { OwnerPanel } from "@/components/admin/owner-panel";
 import { PhotoManager } from "@/components/admin/photo-manager";
 import { ShopEditor, type CityChoice } from "@/components/admin/shop-editor";
-import type { AdminShop } from "@/lib/db";
+import type { ActiveInvite, AdminShop } from "@/lib/db";
 
 export function EditorPage({
   shop,
   cities,
   created,
   ownerEmail = null,
+  invite = null,
 }: {
   shop: AdminShop | null;
   cities: CityChoice[];
   created?: boolean;
   ownerEmail?: string | null;
+  invite?: ActiveInvite | null;
 }) {
   return (
     <div className="flex flex-col gap-5">
@@ -54,7 +56,16 @@ export function EditorPage({
           <PhotoManager shopId={shop.id} photos={shop.photos} />
         </section>
       )}
-      {shop && <OwnerPanel shopId={shop.id} ownerEmail={ownerEmail} />}
+      {shop && (
+        <OwnerPanel
+          shopId={shop.id}
+          shopName={shop.name}
+          shopSlug={shop.slug}
+          published={shop.status === "published"}
+          ownerEmail={ownerEmail}
+          invite={invite}
+        />
+      )}
       <ShopEditor key={shop?.id ?? "new"} shop={shop} cities={cities} />
     </div>
   );

@@ -62,6 +62,7 @@ Environment variables (see [`.env.example`](./.env.example)):
    11. `20261122000007_shop_lists.sql` — curated coffee lists
    12. `20261122000008_security_hardening.sql` — locks ratings/photo credits, spam limits,
        atomic menu/list saves, indexes
+   13. `20261122000009_claim_invites.sql` — one-time owner invite links
 3. Run [`supabase/seed.sql`](./supabase/seed.sql): 57 Negros cities/municipalities plus 10
    fictional demo shops (slugs `demo-*`). Remove the demos before launch:
 
@@ -118,6 +119,15 @@ many people saved the shop or marked it "been here". Your dashboard lists the **
 shops of the week. Counting is anonymous (daily totals per shop, no visitor ids, IPs or cookies);
 each visitor counts once per browser session per action, and only browsers that run JavaScript
 count.
+
+### Inviting owners and QR posters
+
+- **Invite link:** in a shop's editor (Owner panel) tap **Create invite link** and send it to the
+  owner, e.g. on Messenger. It works once and expires after 14 days. The owner signs in, taps
+  **Accept**, and becomes the verified owner without a proof photo. Creating a new link cancels
+  the old one; the full link is only shown once.
+- **QR poster:** `/poster/<shop>` is a printable A4 "Find us on Kape Negros" poster whose QR code
+  opens the shop page. Owners find it on My shop, admins in the Owner panel.
 
 ### Reviews and saved shops
 

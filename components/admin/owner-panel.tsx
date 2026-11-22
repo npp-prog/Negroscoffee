@@ -2,15 +2,31 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Link2, Unlink, UserCheck } from "lucide-react";
+import { Link2, QrCode, Unlink, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { linkOwnerAction, unlinkOwnerAction } from "@/app/admin/shops/[id]/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
+import { InvitePanel } from "@/components/admin/invite-panel";
+import type { ActiveInvite } from "@/lib/db";
 
 /** Link a verified owner's account to this shop by email, or remove the link. */
-export function OwnerPanel({ shopId, ownerEmail }: { shopId: string; ownerEmail: string | null }) {
+export function OwnerPanel({
+  shopId,
+  shopName,
+  shopSlug,
+  published,
+  ownerEmail,
+  invite,
+}: {
+  shopId: string;
+  shopName: string;
+  shopSlug: string;
+  published: boolean;
+  ownerEmail: string | null;
+  invite: ActiveInvite | null;
+}) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [pending, start] = useTransition();
@@ -74,6 +90,18 @@ export function OwnerPanel({ shopId, ownerEmail }: { shopId: string; ownerEmail:
           <Link2 /> {ownerEmail ? "Change" : "Link"}
         </Button>
       </form>
+      {!ownerEmail && <InvitePanel shopId={shopId} shopName={shopName} invite={invite} />}
+      {published && (
+        <p className="text-sm">
+          <a
+            href={`/poster/${shopSlug}`}
+            target="_blank"
+            className="inline-flex items-center gap-1.5 font-medium underline-offset-2 hover:underline"
+          >
+            <QrCode className="size-4 text-crema" aria-hidden="true" /> Printable QR poster
+          </a>
+        </p>
+      )}
     </section>
   );
 }

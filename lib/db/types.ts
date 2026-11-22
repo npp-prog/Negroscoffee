@@ -252,6 +252,51 @@ export type Database = {
           },
         ];
       };
+      shop_claim_invites: {
+        Row: {
+          created_at: string;
+          created_by: string | null;
+          expires_at: string;
+          id: string;
+          revoked_at: string | null;
+          shop_id: string;
+          token_hash: string;
+          used_at: string | null;
+          used_by: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          created_by?: string | null;
+          expires_at: string;
+          id?: string;
+          revoked_at?: string | null;
+          shop_id: string;
+          token_hash: string;
+          used_at?: string | null;
+          used_by?: string | null;
+        };
+        Update: {
+          created_at?: string;
+          created_by?: string | null;
+          expires_at?: string;
+          id?: string;
+          revoked_at?: string | null;
+          shop_id?: string;
+          token_hash?: string;
+          used_at?: string | null;
+          used_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "shop_claim_invites_shop_id_fkey";
+            columns: ["shop_id"];
+            isOneToOne: false;
+            referencedRelation: "shops";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       shop_daily_stats: {
         Row: {
           contacts: number;
@@ -664,9 +709,15 @@ export type Database = {
       };
     };
     Functions: {
+      accept_claim_invite: { Args: { p_token: string }; Returns: string };
       admin_link_owner: { Args: { p_email: string; p_shop_id: string }; Returns: string };
       admin_owner_email: { Args: { p_shop_id: string }; Returns: string };
       admin_unlink_owner: { Args: { p_shop_id: string }; Returns: undefined };
+      claim_invite_hash: { Args: { p_token: string }; Returns: string };
+      claim_invite_info: {
+        Args: { p_token: string };
+        Returns: { shop_id: string; shop_name: string; shop_slug: string; status: string }[];
+      };
       current_user_role: {
         Args: Record<PropertyKey, never>;
         Returns: Database["public"]["Enums"]["user_role"];
