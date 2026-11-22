@@ -1,9 +1,11 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 
 import { expireShops, NotAdminError, requireAdmin } from "@/lib/admin-server";
 import { approveClaim, createDraftFromSuggestion, getSubmission, reviewSubmission } from "@/lib/db";
+import { notifyClaimDecision } from "@/lib/notifications";
 
 export type ReviewResult = { ok: true; message: string } | { ok: false; error: string };
 
@@ -26,6 +28,7 @@ export async function reviewAction(
 
     if (decision === "reject") {
       await reviewSubmission(db, id, "rejected", userId, note);
+      if (sub.kind === "claim") after(() => notifyClaimDecision(id));
       return { ok: true, message: "Rejected" };
     }
 
@@ -41,6 +44,7 @@ export async function reviewAction(
       if (!shop) return { ok: false, error: "The shop no longer exists" };
       await approveClaim(db, shop.id, sub.submitter_id);
       await reviewSubmission(db, id, "approved", userId, note);
+      after(() => notifyClaimDecision(id));
       expireShops([shop.slug]);
       return {
         ok: true,

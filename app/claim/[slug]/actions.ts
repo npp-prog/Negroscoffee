@@ -1,7 +1,10 @@
 "use server";
 
+import { after } from "next/server";
+
 import { submitClaim, uploadSubmissionPhoto } from "@/lib/db";
 import type { FormState } from "@/lib/forms";
+import { notifyNewSubmission } from "@/lib/notifications";
 import { botCheck, fileField, serverError, textValues, visitor } from "@/lib/submissions-server";
 import { checkImage, claimSchema, fieldErrors } from "@/lib/validation";
 
@@ -31,6 +34,9 @@ export async function claimAction(_prev: FormState, form: FormData): Promise<For
     if (result === "shop-not-found") {
       return { status: "error", values, errors: { form: "We couldn't find that shop anymore." } };
     }
+    const from = `${parsed.data.submitterName} <${parsed.data.submitterEmail}>`;
+    const shopSlug = parsed.data.shopSlug;
+    after(() => notifyNewSubmission({ kind: "claim", shopSlug, from }));
     return { status: "success" };
   } catch (err) {
     return serverError(err, values);

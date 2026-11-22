@@ -78,6 +78,7 @@ export type Database = {
         Row: {
           created_at: string;
           display_name: string | null;
+          notify_email: boolean;
           id: string;
           role: Database["public"]["Enums"]["user_role"];
           updated_at: string;
@@ -86,6 +87,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           display_name?: string | null;
+          notify_email?: boolean;
           id: string;
           role?: Database["public"]["Enums"]["user_role"];
           updated_at?: string;
@@ -93,6 +95,7 @@ export type Database = {
         Update: {
           created_at?: string;
           display_name?: string | null;
+          notify_email?: boolean;
           id?: string;
           role?: Database["public"]["Enums"]["user_role"];
           updated_at?: string;

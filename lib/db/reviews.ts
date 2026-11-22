@@ -83,7 +83,7 @@ export async function getMyReview(db: Db, shopId: string, userId: string): Promi
 export async function saveMyReview(
   db: Db,
   input: { shopId: string; userId: string; rating: number; body: string | null },
-): Promise<void> {
+): Promise<"created" | "updated"> {
   const existing = await getMyReview(db, input.shopId, input.userId);
   if (existing) {
     unwrap(
@@ -93,19 +93,20 @@ export async function saveMyReview(
         .eq("id", existing.id)
         .select("id"),
     );
-  } else {
-    unwrap(
-      await db
-        .from("reviews")
-        .insert({
-          shop_id: input.shopId,
-          user_id: input.userId,
-          rating: input.rating,
-          body: input.body,
-        })
-        .select("id"),
-    );
+    return "updated";
   }
+  unwrap(
+    await db
+      .from("reviews")
+      .insert({
+        shop_id: input.shopId,
+        user_id: input.userId,
+        rating: input.rating,
+        body: input.body,
+      })
+      .select("id"),
+  );
+  return "created";
 }
 
 export async function deleteMyReview(db: Db, shopId: string, userId: string) {

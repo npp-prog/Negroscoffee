@@ -1,7 +1,10 @@
 "use server";
 
+import { after } from "next/server";
+
 import { expireShops, getViewer } from "@/lib/admin-server";
 import { deleteMyReview, getShopCardBySlug, replyToReview, saveMyReview } from "@/lib/db";
+import { notifyNewReview } from "@/lib/notifications";
 
 export type ReviewResult = { ok: true } | { ok: false; error: string };
 
@@ -27,8 +30,18 @@ export async function saveReviewAction(
     const ctx = await shopFor(slug);
     if (!ctx?.shop) return { ok: false, error: "Shop not found." };
     if (!ctx.user) return { ok: false, error: "Sign in to leave a review." };
-    await saveMyReview(ctx.db, { shopId: ctx.shop.id, userId: ctx.user.id, rating, body: text });
+    const outcome = await saveMyReview(ctx.db, {
+      shopId: ctx.shop.id,
+      userId: ctx.user.id,
+      rating,
+      body: text,
+    });
     expireShops([slug]);
+    if (outcome === "created") {
+      const shopId = ctx.shop.id;
+      const userId = ctx.user.id;
+      after(() => notifyNewReview({ shopId, userId }));
+    }
     return { ok: true };
   } catch (err) {
     const msg = err instanceof Error ? err.message : "";

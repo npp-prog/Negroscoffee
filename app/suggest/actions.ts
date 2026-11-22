@@ -1,7 +1,10 @@
 "use server";
 
+import { after } from "next/server";
+
 import { submitCorrection, submitNewShop, uploadSubmissionPhoto } from "@/lib/db";
 import type { FormState } from "@/lib/forms";
+import { notifyNewSubmission } from "@/lib/notifications";
 import { botCheck, fileField, serverError, textValues, visitor } from "@/lib/submissions-server";
 import { checkImage, correctionSchema, fieldErrors, suggestShopSchema } from "@/lib/validation";
 
@@ -28,6 +31,10 @@ export async function suggestShopAction(_prev: FormState, form: FormData): Promi
     const { db, submitter } = await visitor();
     const path = photo ? await uploadSubmissionPhoto(db, "suggestions", photo) : null;
     await submitNewShop(db, parsed.data, submitter, path);
+    const from =
+      submitter.email ?? (parsed.data.submitterEmail || parsed.data.submitterName || null);
+    const title = parsed.data.name;
+    after(() => notifyNewSubmission({ kind: "new_shop", title, from }));
     return { status: "success" };
   } catch (err) {
     return serverError(err, values);
@@ -60,6 +67,10 @@ export async function correctionAction(_prev: FormState, form: FormData): Promis
     if (result === "shop-not-found") {
       return { status: "error", values, errors: { form: "We couldn't find that shop anymore." } };
     }
+    const from =
+      submitter.email ?? (parsed.data.submitterEmail || parsed.data.submitterName || null);
+    const shopSlug = parsed.data.shopSlug;
+    after(() => notifyNewSubmission({ kind: "correction", shopSlug, from }));
     return { status: "success" };
   } catch (err) {
     return serverError(err, values);

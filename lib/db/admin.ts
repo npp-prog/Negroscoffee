@@ -23,8 +23,16 @@ export type SubmissionStatus = SubmissionRow["status"];
 // --- profile --------------------------------------------------------------------------------
 
 export async function getProfileRole(db: Db, userId: string) {
-  const row = unwrap<{ role: "admin" | "owner" | "user"; display_name: string | null } | null>(
-    await db.from("profiles").select("role, display_name").eq("id", userId).maybeSingle(),
+  const row = unwrap<{
+    role: "admin" | "owner" | "user";
+    display_name: string | null;
+    notify_email: boolean;
+  } | null>(
+    await db
+      .from("profiles")
+      .select("role, display_name, notify_email")
+      .eq("id", userId)
+      .maybeSingle(),
   );
   return row ?? null;
 }
@@ -656,4 +664,8 @@ export async function quickReviewShop(
 /** The caller updates their own public display name (shown on reviews). */
 export async function updateMyDisplayName(db: Db, userId: string, name: string | null) {
   unwrap(await db.from("profiles").update({ display_name: name }).eq("id", userId).select("id"));
+}
+
+export async function updateMyNotifyEmail(db: Db, userId: string, on: boolean) {
+  unwrap(await db.from("profiles").update({ notify_email: on }).eq("id", userId).select("id"));
 }

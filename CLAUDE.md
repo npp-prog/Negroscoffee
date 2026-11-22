@@ -81,6 +81,12 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   `router.refresh()` after actions on pre-built public pages (its RSC refetch can 404 and force a
   full reload). Pages: `/saved` (favorites, visited, display name), owner replies on
   `/owner/shops/[id]`, moderation at `/admin/reviews`. Data access: `lib/db/reviews.ts`.
+- Email (migration `20261122000004`, `profiles.notify_email`): `lib/email/send.ts` (Resend HTTP
+  API, no-op without `RESEND_API_KEY`, never throws), pure templates in `lib/email/templates.ts`,
+  recipients in `lib/notifications.ts` (service role, server-only; looks up addresses with
+  `auth.admin.getUserById`). Actions schedule sends with `after()` from `next/server`: new review
+  (created, not edited) → shop owner; suggestion/correction/claim → admins (`NOTIFY_ADMIN_EMAILS`
+  or admins with emails on); claim approve/reject → claimant (always). Toggle on `/saved`.
 - `/admin/review`: one-card-at-a-time draft review (type, latte price or tier, Publish / "Not a
   coffee shop" (hidden) / Skip), ordered by province → town → name. `quickReviewShop()` refuses to
   publish without type, tier/price and province.
@@ -146,7 +152,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 ## Database notes
 
 - Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets → explicit
-  API grants → owner editing → reviews & saved shops → published_at). The grants file restores Supabase's standard table privileges for projects created
+  API grants → owner editing → reviews & saved shops → published_at → email prefs). The grants file restores Supabase's standard table privileges for projects created
   with "automatically expose new tables" off; RLS policies still decide row access.
 - Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
   `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.

@@ -28,13 +28,17 @@ Storage), TanStack Query and Zod. See [PLAN.md](./PLAN.md) for the milestones an
 
 Environment variables (see [`.env.example`](./.env.example)):
 
-| Variable                        | Required | Notes                                                                      |
-| ------------------------------- | -------- | -------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | `https://<project-ref>.supabase.co`                                        |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | The public anon / publishable key                                          |
-| `NEXT_PUBLIC_MAPTILER_KEY`      | yes      | Without it the app works but shows a placeholder instead of the map        |
-| `NEXT_PUBLIC_SITE_URL`          | no       | Your public URL; defaults to Vercel's production URL                       |
-| `SUPABASE_SERVICE_ROLE_KEY`     | import   | Only for the OpenStreetMap import. Secret: never in the browser or in code |
+| Variable                        | Required | Notes                                                                |
+| ------------------------------- | -------- | -------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`      | yes      | `https://<project-ref>.supabase.co`                                  |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | yes      | The public anon / publishable key                                    |
+| `NEXT_PUBLIC_MAPTILER_KEY`      | yes      | Without it the app works but shows a placeholder instead of the map  |
+| `NEXT_PUBLIC_SITE_URL`          | no       | Your public URL; defaults to Vercel's production URL                 |
+| `SUPABASE_SERVICE_ROLE_KEY`     | import   | OpenStreetMap import and email lookups. Secret: never in the browser |
+| `RESEND_API_KEY`                | no       | Turns on email notifications (section 3)                             |
+| `EMAIL_FROM`                    | no       | Sender, e.g. `Kape Negros <hello@yourdomain.com>` (verified domain)  |
+| `NOTIFY_ADMIN_EMAILS`           | no       | Comma-separated admin inboxes; default: admins with emails on        |
+| `EMAIL_REPLY_TO`                | no       | Reply address; default: first `NOTIFY_ADMIN_EMAILS` entry            |
 
 `NEXT_PUBLIC_*` values are baked in at build time: after changing them in Vercel, **redeploy**.
 
@@ -50,6 +54,7 @@ Environment variables (see [`.env.example`](./.env.example)):
    5. `20261122000001_owner_editing.sql` — owner self-service permissions and edit log
    6. `20261122000002_reviews_favorites.sql` — reviews, ratings, favorites and "visited"
    7. `20261122000003_published_at.sql` — publish dates for the "New" filter and badges
+   8. `20261122000004_email_notifications.sql` — per-person email on/off setting
 3. Run [`supabase/seed.sql`](./supabase/seed.sql): 57 Negros cities/municipalities plus 10
    fictional demo shops (slugs `demo-*`). Remove the demos before launch:
 
@@ -97,6 +102,23 @@ Signed-in visitors rate shops (1–5 stars, optional text, one review per shop) 
 **favorites** or **visited** (listed on `/saved`, where they also set the name shown on their
 reviews). Averages appear on shop pages and map cards. Owners reply from **My shop**; admins
 hide abusive reviews at `/admin/reviews` (hidden reviews don't count toward ratings).
+
+### Email notifications (optional)
+
+- Owners get an email when someone reviews their shop.
+- Admins get one for each new suggestion, edit or claim.
+- Claimants hear when their claim is approved or declined.
+
+Everyone can switch emails off on `/saved` (claim decisions are always sent).
+
+1. Create a free [Resend](https://resend.com) account → **API Keys → Create** (sending access).
+2. In Vercel add `RESEND_API_KEY` and `SUPABASE_SERVICE_ROLE_KEY` (and optionally
+   `NOTIFY_ADMIN_EMAILS`), then redeploy.
+3. Until you verify a domain in Resend (**Domains**), Resend only delivers to your own account
+   email. After verifying, set `EMAIL_FROM` to an address on that domain.
+
+Emails go out after the page responds, so a slow or failed send never blocks visitors. Failures
+are logged in Vercel's function logs (`[email]`).
 
 ## 4. Deploy (Vercel)
 

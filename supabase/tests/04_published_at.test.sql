@@ -23,3 +23,25 @@ begin
   assert (select published_at is not null from public.shop_cards where slug = 'born-live'), 'exposed on shop_cards';
   raise notice 'ok: published_at';
 end $$;
+
+-- notify_email (migration 20261122000004): users toggle their own, not others'.
+create or replace function pg_temp.as_user(uid text) returns void language plpgsql as $$
+begin
+  perform set_config('request.jwt.claims', json_build_object('sub', uid, 'role', 'authenticated')::text, false);
+  set role authenticated;
+end $$;
+select pg_temp.as_user('00000000-0000-0000-0000-00000000000c');
+do $$
+declare
+  n int;
+begin
+  assert (select notify_email from public.profiles where id = auth.uid()), 'defaults to on';
+  update public.profiles set notify_email = false where id = auth.uid();
+  assert not (select notify_email from public.profiles where id = auth.uid()), 'user turned it off';
+  update public.profiles set notify_email = false where id = '00000000-0000-0000-0000-00000000000b';
+  get diagnostics n = row_count;
+  assert n = 0, 'cannot change someone else';
+  update public.profiles set notify_email = true where id = auth.uid();
+  raise notice 'ok: notify_email';
+end $$;
+reset role;

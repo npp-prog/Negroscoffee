@@ -7,6 +7,7 @@ import { Check, Heart, LogOut } from "lucide-react";
 import { signOutAction } from "@/app/login/actions";
 import { PageShell } from "@/components/layout/page-shell";
 import { DisplayNameForm } from "@/components/saved/display-name-form";
+import { EmailPrefs } from "@/components/saved/email-prefs";
 import { RatingBadge } from "@/components/shop/stars";
 import { TierBadge } from "@/components/shop/tier-badge";
 import { TypeChip } from "@/components/shop/type-chip";
@@ -101,6 +102,8 @@ async function SavedContent() {
       </section>
       <section className="rounded-[20px] border bg-surface p-5 shadow-soft">
         <DisplayNameForm initial={profile?.display_name ?? ""} />
+        <hr className="my-5 border-border" />
+        <EmailPrefs initial={profile?.notify_email ?? true} role={profile?.role ?? "user"} />
       </section>
     </div>
   );
