@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock } from "lucide-react";
+import { Clock, Sparkles } from "lucide-react";
 
 import {
   PRICE_TIERS,
@@ -13,7 +13,7 @@ import {
 import { toggleValue } from "@/lib/filters";
 import { cn } from "@/lib/utils";
 
-type ChipFilters = { tiers: PriceTier[]; types: ShopType[]; openNow: boolean };
+type ChipFilters = { tiers: PriceTier[]; types: ShopType[]; openNow: boolean; newOnly: boolean };
 
 export function FilterChips({
   filters,
@@ -42,6 +42,10 @@ export function FilterChips({
       <Chip pressed={filters.openNow} onClick={() => onChange({ openNow: !filters.openNow })}>
         <Clock className="size-3.5" aria-hidden="true" />
         Open now
+      </Chip>
+      <Chip pressed={filters.newOnly} onClick={() => onChange({ newOnly: !filters.newOnly })}>
+        <Sparkles className="size-3.5" aria-hidden="true" />
+        New
       </Chip>
       {SHOP_TYPES.map((type) => (
         <Chip

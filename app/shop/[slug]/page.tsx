@@ -22,6 +22,8 @@ import { MenuPrices } from "@/components/shop/menu-prices";
 import { PhotoCarousel } from "@/components/shop/photo-carousel";
 import { ReviewsSection } from "@/components/shop/reviews-section";
 import { SaveButtons } from "@/components/shop/save-buttons";
+import { ShareButton } from "@/components/shop/share-button";
+import { NewBadge } from "@/components/shop/new-badge";
 import { RatingBadge } from "@/components/shop/stars";
 import { TierBadge } from "@/components/shop/tier-badge";
 import { TypeChip } from "@/components/shop/type-chip";
@@ -184,6 +186,7 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
                   <TierBadge tier={shop.priceTier} className="text-[13px]" />
                   {tier.label}
                 </span>
+                <NewBadge publishedAt={shop.publishedAt} />
                 {shop.verifiedAt && (
                   <>
                     <span aria-hidden="true">·</span>
@@ -228,6 +231,11 @@ export default async function ShopPage({ params }: PageProps<"/shop/[slug]">) {
                 </Link>
               </Button>
               <SaveButtons shopId={shop.id} slug={shop.slug} />
+              <ShareButton
+                path={`/shop/${shop.slug}`}
+                title={shop.name}
+                text={`${shop.name}${shop.cityName ? ` in ${shop.cityName}` : ""} on Kape Negros`}
+              />
             </div>
 
             {shop.description && (

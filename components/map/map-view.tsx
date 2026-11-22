@@ -2,7 +2,7 @@
 
 import "maplibre-gl/dist/maplibre-gl.css";
 
-import { useCallback, useMemo, useState, type Ref } from "react";
+import { useCallback, useEffect, useMemo, useState, type Ref } from "react";
 import { useTheme } from "next-themes";
 import Map, {
   AttributionControl,
@@ -80,6 +80,16 @@ export default function MapView({
 }) {
   const { resolvedTheme } = useTheme();
   const [viewport, setViewport] = useState<MapViewport | null>(null);
+  // Problems loading the map style itself (not individual tiles), and a retry counter.
+  const [failure, setFailure] = useState<null | "key" | "network" | "slow">(null);
+  const [loaded, setLoaded] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+
+  useEffect(() => {
+    if (loaded) return;
+    const id = setTimeout(() => setFailure((f) => f ?? "slow"), 15_000);
+    return () => clearTimeout(id);
+  }, [loaded, attempt]);
 
   const byId = useMemo(() => new globalThis.Map(shops.map((s) => [s.id, s])), [shops]);
 
@@ -157,13 +167,54 @@ export default function MapView({
       pitchWithRotate={false}
       touchPitch={false}
       attributionControl={false}
-      onLoad={handleMove}
+      key={attempt}
+      onLoad={(e) => {
+        setLoaded(true);
+        setFailure(null);
+        handleMove(e);
+      }}
+      onError={(e) => {
+        if (loaded) return; // a missing tile later on is not worth a banner
+        const err = e.error as (Error & { status?: number }) | undefined;
+        const status = err?.status;
+        setFailure(status === 401 || status === 403 ? "key" : "network");
+      }}
       onMoveEnd={handleMove}
       onClick={onBackgroundClick}
       style={{ position: "absolute", inset: 0 }}
       cooperativeGestures={false}
     >
       <AttributionControl key={attributionPosition} compact position={attributionPosition} />
+
+      {failure && !loaded && (
+        <div className="pointer-events-none absolute inset-0 z-10 grid place-items-center p-6">
+          <div
+            role="alert"
+            className="pointer-events-auto flex max-w-sm flex-col items-center gap-2 rounded-[20px] glass p-5 text-center shadow-float"
+          >
+            <p className="font-semibold">
+              {failure === "slow" ? "The map is taking a while…" : "The map couldn't load"}
+            </p>
+            <p className="text-[13px] text-muted-foreground">
+              {failure === "key"
+                ? "The map service refused this site. The site owner should check the MapTiler key and its allowed domains."
+                : failure === "slow"
+                  ? "Your connection may be slow. The shop list still works."
+                  : "Check your connection. The shop list still works."}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setFailure(null);
+                setAttempt((n) => n + 1);
+              }}
+              className="mt-1 inline-flex h-11 items-center rounded-full bg-primary px-5 text-sm font-medium text-primary-foreground"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       {clusters.map((f) => {
         const [lng, lat] = f.geometry.coordinates;

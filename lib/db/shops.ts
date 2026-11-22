@@ -25,6 +25,8 @@ export type ShopCard = {
   /** Average of visible reviews (1 decimal) and their count. */
   ratingAvg: number | null;
   ratingCount: number;
+  /** When the shop (last) went live; drives "New" badges. */
+  publishedAt: string | null;
 };
 
 export type ShopFilters = {
@@ -58,6 +60,7 @@ type CardSource = {
   distance_m?: number | null;
   rating_avg?: number | null;
   rating_count?: number | null;
+  published_at?: string | null;
 };
 
 function toCard(r: CardSource): ShopCard | null {
@@ -83,6 +86,7 @@ function toCard(r: CardSource): ShopCard | null {
     ...(r.distance_m != null ? { distanceM: r.distance_m } : {}),
     ratingAvg: r.rating_avg != null ? Number(r.rating_avg) : null,
     ratingCount: r.rating_count ?? 0,
+    publishedAt: r.published_at ?? null,
   };
 }
 

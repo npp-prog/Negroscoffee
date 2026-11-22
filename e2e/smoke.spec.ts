@@ -23,6 +23,12 @@ test.describe("public pages", () => {
     );
   });
 
+  test("New filter chip writes new=1", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("button", { name: "New", exact: true }).first().click();
+    await expect(page).toHaveURL(/new=1/);
+  });
+
   test("filters from a shared link are applied", async ({ page }) => {
     await page.goto("/?tier=1,2&type=kapihan");
     await expect(page.getByRole("button", { name: /Local kapihan/ }).first()).toHaveAttribute(

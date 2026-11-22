@@ -28,6 +28,7 @@ import { hasSupabaseEnv } from "@/lib/env";
 import { EMPTY_FILTERS, hasActiveFilters } from "@/lib/filters";
 import { distanceM, type LatLng } from "@/lib/geo";
 import { isOpenAt } from "@/lib/hours";
+import { isNewShop } from "@/lib/new";
 
 const MapView = dynamic(() => import("@/components/map/map-view"), {
   ssr: false,
@@ -70,8 +71,13 @@ export function ExploreShell() {
 
   // Pins: everything fetched that passes the client-side open-now filter.
   const pins = useMemo(
-    () => (fetched ?? []).filter((s) => !state.openNow || isOpenAt(s.hours, now)),
-    [fetched, state.openNow, now],
+    () =>
+      (fetched ?? []).filter(
+        (s) =>
+          (!state.openNow || isOpenAt(s.hours, now)) &&
+          (!state.newOnly || isNewShop(s.publishedAt, now)),
+      ),
+    [fetched, state.openNow, state.newOnly, now],
   );
 
   // List: shops in the visible map area (or every match when searching), nearest first.
@@ -267,7 +273,12 @@ export function ExploreShell() {
     );
   })();
 
-  const chips = { tiers: state.tiers, types: state.types, openNow: state.openNow };
+  const chips = {
+    tiers: state.tiers,
+    types: state.types,
+    openNow: state.openNow,
+    newOnly: state.newOnly,
+  };
   const padding = isDesktop
     ? { top: 24, bottom: 24, left: 24, right: 24 }
     : { top: MOBILE_TOP, bottom: MOBILE_PEEK, left: 16, right: 16 };

@@ -12,6 +12,8 @@ export type ExploreFilters = {
   types: ShopType[];
   tiers: PriceTier[];
   openNow: boolean;
+  /** Only shops published in the last NEW_DAYS days. */
+  newOnly: boolean;
   city: string | null;
 };
 
@@ -25,13 +27,14 @@ export const EMPTY_FILTERS: ExploreFilters = {
   types: [],
   tiers: [],
   openNow: false,
+  newOnly: false,
   city: null,
 };
 
 export const EMPTY_STATE: ExploreState = { ...EMPTY_FILTERS, shop: null };
 
 /** Query keys owned by the explore state. Other keys in the URL are left alone. */
-export const FILTER_KEYS = ["q", "type", "tier", "open", "city", "shop"] as const;
+export const FILTER_KEYS = ["q", "type", "tier", "open", "new", "city", "shop"] as const;
 
 const SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const MAX_Q = 80;
@@ -58,6 +61,7 @@ export function parseExploreState(params: ParamsLike): ExploreState {
     types: list(params.get("type"), SHOP_TYPES, (s) => s as ShopType),
     tiers: list(params.get("tier"), PRICE_TIERS, (s) => Number(s) as PriceTier),
     openNow: params.get("open") === "1",
+    newOnly: params.get("new") === "1",
     city: city && SLUG.test(city) ? city : null,
     shop: shop && SLUG.test(shop) ? shop : null,
   };
@@ -81,13 +85,21 @@ export function serializeExploreState(
   set("type", s.types.length ? SHOP_TYPES.filter((t) => s.types.includes(t)).join(",") : null);
   set("tier", s.tiers.length ? PRICE_TIERS.filter((t) => s.tiers.includes(t)).join(",") : null);
   set("open", s.openNow ? "1" : null);
+  set("new", s.newOnly ? "1" : null);
   set("city", s.city);
   set("shop", s.shop);
   return params.toString();
 }
 
 export function hasActiveFilters(f: ExploreFilters): boolean {
-  return f.q.trim() !== "" || f.types.length > 0 || f.tiers.length > 0 || f.openNow || !!f.city;
+  return (
+    f.q.trim() !== "" ||
+    f.types.length > 0 ||
+    f.tiers.length > 0 ||
+    f.openNow ||
+    f.newOnly ||
+    !!f.city
+  );
 }
 
 export function toggleValue<T>(list: readonly T[], item: T): T[] {

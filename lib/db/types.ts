@@ -310,6 +310,7 @@ export type Database = {
           updated_at: string;
           rating_avg: number | null;
           rating_count: number;
+          published_at: string | null;
           verified_at: string | null;
           website: string | null;
         };
@@ -339,6 +340,7 @@ export type Database = {
           updated_at?: string;
           rating_avg?: number | null;
           rating_count?: number;
+          published_at?: string | null;
           verified_at?: string | null;
           website?: string | null;
         };
@@ -367,6 +369,7 @@ export type Database = {
           updated_at?: string;
           rating_avg?: number | null;
           rating_count?: number;
+          published_at?: string | null;
           verified_at?: string | null;
           website?: string | null;
         };
@@ -479,6 +482,7 @@ export type Database = {
           type: Database["public"]["Enums"]["shop_type"] | null;
           rating_avg: number | null;
           rating_count: number | null;
+          published_at: string | null;
           verified_at: string | null;
         };
         ComputedFields: never;
@@ -526,6 +530,7 @@ export type Database = {
           type: Database["public"]["Enums"]["shop_type"] | null;
           rating_avg: number | null;
           rating_count: number | null;
+          published_at: string | null;
           verified_at: string | null;
         }[];
         SetofOptions: {

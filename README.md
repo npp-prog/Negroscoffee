@@ -49,6 +49,7 @@ Environment variables (see [`.env.example`](./.env.example)):
    4. `…04_api_grants.sql` — table privileges for the API roles (needed on newer projects)
    5. `20261122000001_owner_editing.sql` — owner self-service permissions and edit log
    6. `20261122000002_reviews_favorites.sql` — reviews, ratings, favorites and "visited"
+   7. `20261122000003_published_at.sql` — publish dates for the "New" filter and badges
 3. Run [`supabase/seed.sql`](./supabase/seed.sql): 57 Negros cities/municipalities plus 10
    fictional demo shops (slugs `demo-*`). Remove the demos before launch:
 

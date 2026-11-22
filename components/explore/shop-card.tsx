@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ChevronRight, Coffee } from "lucide-react";
 
+import { NewBadge } from "@/components/shop/new-badge";
 import { OpenStatus } from "@/components/shop/open-status";
 import { RatingBadge } from "@/components/shop/stars";
 import { TierBadge } from "@/components/shop/tier-badge";
@@ -78,6 +79,7 @@ export function ShopCard({
           >
             {shop.name}
           </button>
+          <NewBadge publishedAt={shop.publishedAt} className="relative z-10 ml-1.5 align-middle" />
         </h3>
         <div className="flex min-w-0 items-center gap-2 overflow-hidden text-muted-foreground">
           <TypeChip type={shop.type} />

@@ -26,11 +26,16 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
   service-role client is server-only; never import it from client components.
 - Schema changes = new SQL file in `supabase/migrations/` (timestamped). Never edit an applied migration.
 - Filters and selected shop are stored in the URL query string (`lib/filters.ts`): `q`, `type`,
-  `tier`, `open`, `city`, `shop`. Read with `useExploreState()`; it writes via the History API
+  `tier`, `open`, `new`, `city`, `shop`. "New" = `shops.published_at` within 14 days
+  (`lib/new.ts`); `published_at` is set only by trigger (migration `20261122000003`) when a shop
+  becomes published. `NewBadge` decides in the browser (prerendered pages can't read the clock). Read with `useExploreState()`; it writes via the History API
   (filters replace, selecting a shop pushes).
 - Map: `components/map/map-view.tsx` (client-only, `next/dynamic` with `ssr: false`). Pins are
   HTML markers clustered with `supercluster`. MapLibre's worker URL is set explicitly
   (`setWorkerUrl`) because bundling breaks its default lookup. Keep the attribution control visible.
+  If the style fails before load (401/403 = key/domain refused, network error, or >15 s), MapView
+  shows a notice with Retry; tile errors after load are ignored. Root layout preconnects to
+  MapTiler and Supabase.
 - Open-now logic lives in `lib/hours.ts` (Asia/Manila); the "Open now" filter runs client-side.
 - Shop page `/shop/[slug]`: data via `getPublicShop()` in `app/shop/[slug]/data.ts` (`"use cache"`,
   `cacheLife("hours")`, tags `shop:<slug>` and `shops`). After admin edits call
@@ -141,7 +146,7 @@ price tier and shop type. See PLAN.md for milestones. Source plan: the
 ## Database notes
 
 - Migrations: `supabase/migrations/` (core schema → RLS + search RPCs → storage buckets → explicit
-  API grants → owner editing → reviews & saved shops). The grants file restores Supabase's standard table privileges for projects created
+  API grants → owner editing → reviews & saved shops → published_at). The grants file restores Supabase's standard table privileges for projects created
   with "automatically expose new tables" off; RLS policies still decide row access.
 - Search: `shops_near(lat, lng, radius_m, types, tiers, city, q)` and
   `shops_in_bbox(min_lng, min_lat, max_lng, max_lat, …)`; both return published shops only.

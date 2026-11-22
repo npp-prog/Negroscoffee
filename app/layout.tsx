@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fraunces, Inter } from "next/font/google";
+import { preconnect } from "react-dom";
 
 import { Providers } from "@/components/providers";
 import { PwaRegister } from "@/components/pwa-register";
@@ -45,6 +46,11 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
+  // Start TLS handshakes to the map and data hosts before the map code asks for them.
+  preconnect("https://api.maptiler.com", { crossOrigin: "anonymous" });
+  if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+    preconnect(process.env.NEXT_PUBLIC_SUPABASE_URL, { crossOrigin: "anonymous" });
+  }
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${fraunces.variable}`}>
       <body className="min-h-dvh">

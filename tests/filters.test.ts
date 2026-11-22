@@ -22,6 +22,7 @@ describe("parseExploreState", () => {
       types: ["specialty", "kapihan"],
       tiers: [1, 2],
       openNow: true,
+      newOnly: false,
       city: "bacolod",
       shop: "kape-ni-lola",
     });
@@ -65,5 +66,14 @@ describe("hasActiveFilters", () => {
   it("ignores whitespace-only search and the selected shop", () => {
     expect(hasActiveFilters({ ...EMPTY_STATE, q: "  " })).toBe(false);
     expect(hasActiveFilters({ ...EMPTY_STATE, tiers: [2] })).toBe(true);
+  });
+});
+
+describe("new filter", () => {
+  it("round-trips new=1 and counts as an active filter", () => {
+    const s = parse("new=1");
+    expect(s.newOnly).toBe(true);
+    expect(serializeExploreState(s)).toBe("new=1");
+    expect(hasActiveFilters(s)).toBe(true);
   });
 });
